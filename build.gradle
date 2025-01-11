@@ -1,0 +1,54 @@
+plugins {
+    id 'java'
+    id 'antlr'
+    id 'idea'
+}
+
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    antlr 'org.antlr:antlr4:4.13.2'
+    implementation 'org.antlr:antlr4-runtime:4.13.2'
+}
+
+def grammarDir = 'src/main/antlr'
+def generatedSrcDir = "$buildDir/generated-src/antlr/main"
+
+generateGrammarSource {
+    maxHeapSize = "128m"
+
+    source = fileTree(grammarDir) {
+        include '**/*.g4'
+    }
+
+    arguments += ['-visitor', '-no-listener']
+    outputDirectory = file(generatedSrcDir)
+}
+
+sourceSets {
+    main {
+        java {
+            srcDirs = ['src/main/java', 'src/main/antlr', generatedSrcDir]
+        }
+    }
+}
+
+compileJava {
+    dependsOn generateGrammarSource
+    source sourceSets.main.java.srcDirs
+}
+
+clean {
+    delete generatedSrcDir
+}
+
+idea {
+    module {
+        sourceDirs += file(generatedSrcDir)
+        generatedSourceDirs += file(generatedSrcDir)
+    }
+}

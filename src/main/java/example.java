@@ -1,0 +1,34 @@
+import org.antlr.v4.gui.TreeViewer;
+import org.antlr.v4.runtime.*;
+import org.antlr.v4.runtime.tree.*;
+
+import javax.swing.*;
+import java.io.IOException;
+import java.util.Arrays;
+
+public class example {
+
+    public static void main(String[] args) throws IOException {
+
+        CharStream charStream = CharStreams.fromFileName("src/main/tests/basic.cpp");
+
+        CPP14Lexer lexer = new CPP14Lexer(charStream);
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        CPP14Parser parser = new CPP14Parser(tokens);
+//        parser.setTrace(true);
+        ParseTree tree = parser.translationUnit();
+        System.out.println("------------------------");
+        JFrame frame = new JFrame("ANTLR");
+        TreeViewer viewer = new TreeViewer(Arrays.asList(parser.getRuleNames()), tree);
+        viewer.setScale(1.0); // Adjust the scale as needed
+        JScrollPane scrollPane = new JScrollPane(viewer);
+        frame.add(scrollPane);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setSize(800, 600);
+        frame.setVisible(true);
+
+
+        System.out.println(tree.toStringTree(parser));
+    }
+
+}
