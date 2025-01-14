@@ -28,6 +28,6 @@ public class DeclaratorNode extends ASTNode{
 
     @Override
     public String toString() {
-        return "";
+        return "DeclaratorNode{ " + declaratorId + " : " + parameters + " }";
     }
 }

@@ -6,18 +6,24 @@ import java.util.List;
 public class FunctionNode extends ASTNode{
 
     private final String return_value;
-    private final String name;
+    private  ASTNode func_declarator; // Name of function and parameters
     private final List<ASTNode> body;
-    private List<ASTNode> parameters;
 
-    public FunctionNode(String name, String return_value) {
+    public FunctionNode(String return_value, ASTNode declarator) {
         this.body = new ArrayList<>();
-        this.name = name;
         this.return_value = return_value;
+        this.func_declarator = declarator;
     }
 
-    public String getName() {
-        return name;
+    public void addBodyNode(ASTNode node){
+        body.add(node);
+    }
+
+    public ASTNode getFunc_declarator() {
+        return func_declarator;
+    }
+    public void setFunc_declarator(ASTNode func_declarator) {
+        this.func_declarator = func_declarator;
     }
 
     public String getReturn_value() {
@@ -28,16 +34,8 @@ public class FunctionNode extends ASTNode{
         return body;
     }
 
-    public List<ASTNode> getParameters() {
-        return parameters;
-    }
-
-    public void setParameters(List<ASTNode> parameters) {
-        this.parameters = parameters;
-    }
-
     @Override
     public String toString() {
-        return "Function{"+"return_value=" + return_value + ", name='" + name + '\'' + ", body=" + body + ", parameters=" + parameters + '}';
+        return "Function{"+"return_value=" + return_value + ", name='" + func_declarator.toString() + '\'' + ", body=" + body +  + '}';
     }
 }

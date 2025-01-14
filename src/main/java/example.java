@@ -1,3 +1,4 @@
+import ast.ASTNode;
 import org.antlr.v4.gui.TreeViewer;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.*;
@@ -16,7 +17,13 @@ public class example {
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         CPP14Parser parser = new CPP14Parser(tokens);
 //        parser.setTrace(true);
+
+        // Printout of my AST
         ParseTree tree = parser.translationUnit();
+        ASTBuilder ast = new ASTBuilder();
+        ASTNode root = ast.visit(tree);
+        System.out.println(root);
+
         System.out.println("------------------------");
         JFrame frame = new JFrame("ANTLR");
         TreeViewer viewer = new TreeViewer(Arrays.asList(parser.getRuleNames()), tree);
