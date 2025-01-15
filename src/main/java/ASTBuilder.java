@@ -1,4 +1,5 @@
 import ast.*;
+import com.ibm.icu.message2.Mf2DataModel;
 import org.antlr.v4.runtime.tree.ParseTree;
 import java.util.ArrayList;
 import java.util.List;
@@ -61,6 +62,14 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode>{
             visitNoPointerDeclarator(ctx.noPointerDeclarator(), decl);
         }
 
+        if (ctx.pointerOperator() != null) {
+            StringBuilder sb = new StringBuilder();
+            for (CPP14Parser.PointerOperatorContext op : ctx.pointerOperator()){
+                sb.append(op.getText());
+            }
+
+            decl.setPointer(sb.toString());
+        }
     }
 
     public void visitNoPointerDeclarator(CPP14Parser.NoPointerDeclaratorContext ctx, DeclaratorNode decl) {
@@ -70,7 +79,7 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode>{
         }
 
         if (ctx.parametersAndQualifiers() != null) {
-
+            visitParametersAndQualifiers(ctx.parametersAndQualifiers(), decl);
         }
 
         if (ctx.declaratorid() != null) {
@@ -81,7 +90,32 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode>{
 
 
     public void visitParametersAndQualifiers(CPP14Parser.ParametersAndQualifiersContext ctx, DeclaratorNode decl) {
-        // TODO params;
+
+        if (ctx.parameterDeclarationClause() != null) {
+            visitParameterDeclarationClause(ctx.parameterDeclarationClause(), decl);
+        }
+    }
+
+    private void visitParameterDeclarationClause(CPP14Parser.ParameterDeclarationClauseContext ctx, DeclaratorNode decl) {
+
+        CPP14Parser.ParameterDeclarationListContext paramList = ctx.parameterDeclarationList();
+        if (paramList != null) {
+            ArrayList<VariableDeclarationNode> list = new ArrayList<>();
+            for(CPP14Parser.ParameterDeclarationContext elem: paramList.parameterDeclaration())
+            {
+
+                String type = elem.declSpecifierSeq().getText();
+                DeclaratorNode name = new DeclaratorNode();
+                visitDeclarator(elem.declarator(), name);
+
+                if (name.getPointer() != null) {
+                    type = type.concat(name.getPointer());
+                }
+                VariableDeclarationNode vd = new VariableDeclarationNode(type, name);
+                list.add(vd);
+            }
+            decl.setParameters(list);
+        }
     }
 
     /*

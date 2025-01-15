@@ -1,5 +1,8 @@
 package ast;
 
+/*
+ can be used as PARAMETER NODE for function parameters w/o expression field.
+ */
 public class VariableDeclarationNode extends ASTNode {
 
     private String type;
@@ -12,6 +15,12 @@ public class VariableDeclarationNode extends ASTNode {
         this.type = type;
 
     }
+
+    public VariableDeclarationNode(String type, DeclaratorNode name) {
+        this.name = name;
+        this.type = type;
+    }
+
     public VariableDeclarationNode(){};
 
     public String getType() {
@@ -39,6 +48,26 @@ public class VariableDeclarationNode extends ASTNode {
     }
 
     public String toString() {
-        return "VariableDeclaration{ " + "name=" + name + ", type= "+ type +  ", expression=" + expression + " }";
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("VariableDeclaration{");
+        if (type != null) {
+            sb.append("type: ").append(type).append(" ");
+        }
+
+        if (name.getDeclaratorId() != null) {
+            sb.append("name: ").append(name.getDeclaratorId()).append(" ");
+        }
+
+        if (name.getParameters() != null) {
+            sb.append("parameters: ").append(name.getParameters()).append(" ");
+        }
+
+        if (expression != null) {
+            sb.append("expression: ").append(expression).append(" ");
+        }
+
+        sb.append("}");
+        return sb.toString();
     }
 }

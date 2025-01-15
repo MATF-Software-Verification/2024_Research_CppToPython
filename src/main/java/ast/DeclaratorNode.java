@@ -1,11 +1,13 @@
 package ast;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class DeclaratorNode extends ASTNode{
 
-    private String declaratorId;
-    private List<ASTNode> parameters;
+    private String declaratorId; // name of the declared value
+    private String pointer;
+    private ArrayList<VariableDeclarationNode> parameters;
 
     public DeclaratorNode() {
     }
@@ -18,16 +20,35 @@ public class DeclaratorNode extends ASTNode{
         this.declaratorId = declaratorId;
     }
 
-    public List<ASTNode> getParameters() {
+    public ArrayList<VariableDeclarationNode> getParameters() {
         return parameters;
     }
 
-    public void setParameters(List<ASTNode> parameters) {
+    public void setParameters(ArrayList<VariableDeclarationNode> parameters) {
         this.parameters = parameters;
+    }
+
+    public String getPointer() {
+        return pointer;
+    }
+
+    public void setPointer(String pointer) {
+        this.pointer = pointer;
     }
 
     @Override
     public String toString() {
-        return "DeclaratorNode{ " + declaratorId + " : " + parameters + " }";
+        StringBuilder sb = new StringBuilder();
+        sb.append("DeclaratorNode{");
+        if (declaratorId != null) {
+            sb.append("name: ").append(declaratorId).append(" ");
+        }
+
+        if (parameters != null) {
+            sb.append("parameters: ").append(parameters);
+        }
+        sb.append("}");
+
+        return sb.toString();
     }
 }
