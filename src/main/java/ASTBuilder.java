@@ -157,6 +157,16 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode>{
             CPP14Parser.ExpressionContext expr = expression.expression();
             return visitExpression(expr);
         }
+
+        if (ctx.jumpStatement() != null) {
+            ExpressionNode expr = (ExpressionNode) visitJumpStatement(ctx.jumpStatement());
+            expr.setType("return");
+            return expr;
+        }
+
+        if (ctx.iterationStatement() != null) {
+            return visitIterationStatement(ctx.iterationStatement());
+        }
         // TODO add other statements
         return null;
     }
@@ -223,6 +233,14 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode>{
         //DeclaratorTypeNode node = DeclaratorTypeNode();
         //visitDeclSpecifier(ctx.declSpecifier(0), variable);
         variable.setType(ctx.declSpecifier(0).getText());
+    }
+
+    @Override
+    public ASTNode visitJumpStatement(CPP14Parser.JumpStatementContext ctx) {
+
+        ExpressionNode expr = (ExpressionNode) visitExpression(ctx.expression());
+
+        return expr;
     }
 
     public ASTNode visitExpression(CPP14Parser.ExpressionContext ctx) {

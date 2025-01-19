@@ -31,7 +31,8 @@ public class ExpressionNode extends ASTNode {
 
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        if(type != null) sb.append(type);
+        sb.append("Expression:");
+        if(type != null) sb.append("[ type : ").append(type).append(" ]");
         if(operator != null){
             sb.append("[ operator: ").append(operator).append(" ]");
         }

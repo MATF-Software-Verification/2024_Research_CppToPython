@@ -11,7 +11,7 @@ public class example {
 
     public static void main(String[] args) throws IOException {
 
-        CharStream charStream = CharStreams.fromFileName("src/main/tests/basic.cpp");
+        CharStream charStream = CharStreams.fromFileName("src/main/tests/fizzbuzz.cpp");
 
         CPP14Lexer lexer = new CPP14Lexer(charStream);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
