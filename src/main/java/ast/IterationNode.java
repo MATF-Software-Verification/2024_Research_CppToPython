@@ -10,6 +10,7 @@ public class IterationNode extends ASTNode{
     private ASTNode rangeDeclaration; // range-based "for"
     private ExpressionNode rangeInitializer; // range-based "for"
 
+    public IterationNode() {}
     public IterationNode(String type, ExpressionNode condition, ASTNode body) {
         this.type = type;
         this.condition = condition;
@@ -71,9 +72,38 @@ public class IterationNode extends ASTNode{
     public void setBody(ASTNode body) {
         this.body = body;
     }
+    public ASTNode getRangeDeclaration() {
+        return rangeDeclaration;
+    }
+
+    public void setRangeDeclaration(ASTNode rangeDeclaration) {
+        this.rangeDeclaration = rangeDeclaration;
+    }
+
+    public ExpressionNode getRangeInitializer() {
+        return rangeInitializer;
+    }
+
+    public void setRangeInitializer(ExpressionNode rangeInitializer) {
+        this.rangeInitializer = rangeInitializer;
+    }
 
     @Override
     public String toString() {
+        if(type.equals("for")){
+            StringBuffer sb = new StringBuffer();
+            sb.append("IterationNode{");
+            sb.append("type='"+type+"',");
+            sb.append("condition="+condition+",");
+            sb.append("init="+init+",");
+            sb.append("update="+update+",");
+            sb.append("rangeDeclaration="+rangeDeclaration+",");
+            sb.append("rangeInitializer="+rangeInitializer+",");
+            sb.append("}");
+
+
+            return sb.toString();
+        }
         return "Iteration Node:";
     }
 

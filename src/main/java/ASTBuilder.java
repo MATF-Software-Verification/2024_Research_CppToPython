@@ -1,6 +1,4 @@
 import ast.*;
-import com.ibm.icu.message2.Mf2DataModel;
-import org.antlr.v4.runtime.tree.ParseTree;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
@@ -34,7 +32,7 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode>{
     @Override
     public ASTNode visitFunctionDefinition(CPP14Parser.FunctionDefinitionContext ctx) {
 
-        String return_value = ctx.declSpecifierSeq().getText();
+        String return_value = ctx.declSpecifierSeq().getText(); //TODO: maybe need to optimize
         DeclaratorNode decl = new DeclaratorNode();
         visitDeclarator(ctx.declarator(), decl);
         FunctionNode functionNode = new FunctionNode(return_value, decl);
@@ -165,12 +163,66 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode>{
         }
 
         if (ctx.iterationStatement() != null) {
-            return visitIterationStatement(ctx.iterationStatement());
+            IterationNode iterationNode = new IterationNode();
+            visitIterationStatement(ctx.iterationStatement(), iterationNode);
+            return iterationNode;
         }
         // TODO add other statements
         return null;
     }
 
+    private void visitIterationStatement(CPP14Parser.IterationStatementContext ctx, IterationNode iterationNode) {
+
+        if (ctx.While() != null) {
+            iterationNode.setType("while");
+        }else if(ctx.For() != null) {
+            System.out.println("This is for");
+            iterationNode.setType("for");
+            visitForInitStatement(ctx.forInitStatement(), iterationNode);
+            if(ctx.condition()!= null) {
+                ExpressionNode condition = (ExpressionNode) visitExpression(ctx.condition().expression());
+                iterationNode.setCondition(condition);
+            }
+            if(ctx.expression()!= null) {
+                ExpressionNode exp = (ExpressionNode) visitExpression(ctx.expression());
+                iterationNode.setUpdate(exp);
+            }
+            if(ctx.forRangeDeclaration() != null) {
+                visitForRangeDeclaration(ctx.forRangeDeclaration(), iterationNode);
+            }
+            if(ctx.forRangeInitializer() != null) {
+                visitForRangeInitializer(ctx.forRangeInitializer(), iterationNode);
+            }
+
+        }else if(ctx.Do() != null){
+            iterationNode.setType("do");
+        }
+    }
+    private void visitForRangeDeclaration(CPP14Parser.ForRangeDeclarationContext ctx, IterationNode iterationNode) {
+        //TODO change this
+        System.out.println("This is  for range declaration");
+        //iterationNode.setRangeDeclaration(new ExpressionNode(ctx.getText()));
+    }
+    private void visitForRangeInitializer(CPP14Parser.ForRangeInitializerContext ctx, IterationNode iterationNode) {
+        //TODO Fix this
+        System.out.println("This is  for range initializer: ");
+        System.out.println(ctx.getText());
+        if(ctx.expression() != null) {
+            ExpressionNode expr = (ExpressionNode) visitExpression(ctx.expression());
+            iterationNode.setRangeInitializer(expr);
+        }
+
+    }
+    private void visitForInitStatement(CPP14Parser.ForInitStatementContext ctx, IterationNode iterationNode) {
+        if (ctx.expressionStatement() != null) {
+            ExpressionNode expr = (ExpressionNode) visitExpression(ctx.expressionStatement().expression());
+            iterationNode.setCondition(expr);
+        }else if(ctx.simpleDeclaration() != null) {
+            VariableDeclarationNode var = new VariableDeclarationNode();
+            visitSimpleDeclaration(ctx.simpleDeclaration(),var);
+
+        }
+    }
     private void visitDeclarationStatement(CPP14Parser.DeclarationStatementContext ctx, VariableDeclarationNode variable) {
         if(ctx.blockDeclaration() != null) {
             visitBlockDeclaration(ctx.blockDeclaration(), variable);
