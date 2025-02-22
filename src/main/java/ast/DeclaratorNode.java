@@ -51,4 +51,17 @@ public class DeclaratorNode extends ASTNode{
 
         return sb.toString();
     }
+    @Override
+    public String toPython(int ident) {
+        StringBuilder sb = new StringBuilder();
+
+        if(parameters == null){
+            for(int i =0; i<ident; i++){
+                sb.append("\t");
+            }
+            sb.append(declaratorId);
+        }
+
+        return sb.toString();
+    }
 }

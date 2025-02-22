@@ -16,4 +16,12 @@ public class TranslationUnitNode extends ASTNode {
     public String toString() {
         return "TranslationUnit{" + declarations + "}";
     }
+    @Override
+    public  String toPython(int indent) {
+        StringBuilder sb = new StringBuilder();
+        for (ASTNode declaration : declarations) {
+            sb.append(declaration.toPython(indent));
+        }
+        return sb.toString();
+    }
 }

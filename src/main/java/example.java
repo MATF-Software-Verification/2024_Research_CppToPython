@@ -11,7 +11,7 @@ public class example {
 
     public static void main(String[] args) throws IOException {
 
-        CharStream charStream = CharStreams.fromFileName("src/main/tests/fizzbuzz.cpp");
+        CharStream charStream = CharStreams.fromFileName("src/main/tests/basic.cpp");
 
         CPP14Lexer lexer = new CPP14Lexer(charStream);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
@@ -23,8 +23,13 @@ public class example {
         ASTBuilder ast = new ASTBuilder();
         ASTNode root = ast.visit(tree);
         System.out.println(root);
-
         System.out.println("------------------------");
+
+
+        System.out.println("============= Python End ===========");
+        String endString = root.toPython(  0);
+        System.out.println(endString);
+        System.out.println("=====================================");
         JFrame frame = new JFrame("ANTLR");
         TreeViewer viewer = new TreeViewer(Arrays.asList(parser.getRuleNames()), tree);
         viewer.setScale(1.0); // Adjust the scale as needed

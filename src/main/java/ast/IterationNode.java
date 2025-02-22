@@ -107,4 +107,15 @@ public class IterationNode extends ASTNode{
         return "Iteration Node:";
     }
 
+    @Override
+    public String toPython(int ident) {
+
+        StringBuffer sb = new StringBuffer();
+        for(int i = 0; i < ident; i++){
+            sb.append("\t");
+        }
+
+
+        return "";
+    }
 }

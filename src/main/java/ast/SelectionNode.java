@@ -68,4 +68,9 @@ public class SelectionNode extends ASTNode {
         }
         return sb.toString();
     }
+
+    @Override
+    public String toPython(int indent) {
+        return "";
+    }
 }

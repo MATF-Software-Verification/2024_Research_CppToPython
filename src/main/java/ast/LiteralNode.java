@@ -22,4 +22,9 @@ public class LiteralNode extends ASTNode {
     public String toString() {
         return "LiteralNode{ " + value + " }";
     }
+
+    @Override
+    public String toPython(int indent) {
+        return value;
+    }
 }

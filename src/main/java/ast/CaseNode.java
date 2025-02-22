@@ -29,4 +29,9 @@ public class CaseNode extends ASTNode{
         sb.append(body);
         return sb.toString();
     }
+
+    @Override
+    public String toPython(int ident) {
+        return "";
+    }
 }

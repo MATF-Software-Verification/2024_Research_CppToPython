@@ -70,4 +70,15 @@ public class VariableDeclarationNode extends ASTNode {
         sb.append("}");
         return sb.toString();
     }
+    public String toPython(int indent) {
+
+        StringBuilder sb = new StringBuilder();
+        for(int i = 0; i < indent; i++){
+            sb.append("\t");
+        }
+        sb.append(name.toPython(0));
+        sb.append(" = ");
+        sb.append(expression.toPython(0));
+        return sb.toString();
+    }
 }
