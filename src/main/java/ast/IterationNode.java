@@ -91,16 +91,15 @@ public class IterationNode extends ASTNode{
     @Override
     public String toString() {
         if(type.equals("for")){
-            StringBuffer sb = new StringBuffer();
+            StringBuilder sb = new StringBuilder();
             sb.append("IterationNode{");
+            sb.append("init="+init+",");
             sb.append("type='"+type+"',");
             sb.append("condition="+condition+",");
-            sb.append("init="+init+",");
             sb.append("update="+update+",");
             sb.append("rangeDeclaration="+rangeDeclaration+",");
             sb.append("rangeInitializer="+rangeInitializer+",");
             sb.append("}");
-
 
             return sb.toString();
         }

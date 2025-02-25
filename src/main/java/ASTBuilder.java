@@ -220,7 +220,7 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode>{
         }else if(ctx.simpleDeclaration() != null) {
             VariableDeclarationNode var = new VariableDeclarationNode();
             visitSimpleDeclaration(ctx.simpleDeclaration(),var);
-
+            iterationNode.setInit(var);
         }
     }
     private void visitDeclarationStatement(CPP14Parser.DeclarationStatementContext ctx, VariableDeclarationNode variable) {
@@ -305,11 +305,16 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode>{
         if(ctx.conditionalExpression() != null) {
             return visitConditionalExpression(ctx.conditionalExpression());
         }else{
-            ExpressionNode left = (ExpressionNode) visitLogicalOrExpression(ctx.logicalOrExpression());
+            ExpressionNode left = new ExpressionNode();
+            visitLogicalOrExpression(ctx.logicalOrExpression(), left);
             String operator = ctx.assignmentOperator().getText();
-            ExpressionNode right = (ExpressionNode) visitLogicalOrExpression(ctx.logicalOrExpression());
+            ExpressionNode right = (ExpressionNode) visitInitializerClause(ctx.initializerClause());
+            ExpressionNode expr = new ExpressionNode();
+            expr.addChild(left);
+            expr.addChild(right);
+            expr.setOperator(operator);
+            return expr;
         }
-        return null;
     }
     public ASTNode visitConditionalExpression(CPP14Parser.ConditionalExpressionContext ctx) {
 
@@ -474,6 +479,20 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode>{
         if(ctx.postfixExpression() != null){
             visitPostfixExpression(ctx.postfixExpression(),expression);
         }
+
+        if(ctx.unaryExpression() != null){
+            visitUnaryExpression(ctx.unaryExpression(), expression);
+        }
+
+        if(ctx.PlusPlus() != null){
+            expression.setOperator(ctx.PlusPlus().getText());
+            expression.setType("prefixIncrement");
+        }
+
+        if (ctx.MinusMinus() != null){
+            expression.setOperator(ctx.MinusMinus().getText());
+            expression.setType("prefixDecrement");
+        }
     }
 
     private void visitPostfixExpression(CPP14Parser.PostfixExpressionContext ctx, ExpressionNode expression) {
@@ -488,6 +507,16 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode>{
         }
         if (ctx.primaryExpression() != null){
             visitPrimaryExpression(ctx.primaryExpression(), expression);
+        }
+
+        if (ctx.PlusPlus() != null){
+            expression.setOperator(ctx.PlusPlus().getText());
+            expression.setType("postfixIncrement");
+        }
+
+        if (ctx.MinusMinus() != null){
+            expression.setOperator(ctx.MinusMinus().getText());
+            expression.setType("postfixDecrement");
         }
     }
     private void visitPrimaryExpression(CPP14Parser.PrimaryExpressionContext ctx, ExpressionNode expression) {
