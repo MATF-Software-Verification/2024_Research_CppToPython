@@ -1,23 +1,28 @@
 package ast;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class IterationNode extends ASTNode{
 
     private String type; // "while", "do-while", "for"
     private ExpressionNode condition;
-    private ASTNode body;
+    private List<ASTNode> body;
     private ASTNode init; // basic "for"
     private ExpressionNode update; // basic "for"
     private ASTNode rangeDeclaration; // range-based "for"
     private ExpressionNode rangeInitializer; // range-based "for"
 
-    public IterationNode() {}
-    public IterationNode(String type, ExpressionNode condition, ASTNode body) {
+    public IterationNode() {
+        body = new ArrayList<>();
+    }
+    public IterationNode(String type, ExpressionNode condition, List<ASTNode> body) {
         this.type = type;
         this.condition = condition;
         this.body = body;
     }
 
-    public IterationNode(String type, ASTNode init, ExpressionNode condition, ExpressionNode update, ASTNode body) {
+    public IterationNode(String type, ASTNode init, ExpressionNode condition, ExpressionNode update, List<ASTNode> body) {
         this.type = type;
         this.init = init;
         this.condition = condition;
@@ -26,7 +31,7 @@ public class IterationNode extends ASTNode{
     }
 
     // Constructor for range-based for
-    public IterationNode(String type, ASTNode rangeDeclaration, ExpressionNode rangeInitializer, ASTNode body) {
+    public IterationNode(String type, ASTNode rangeDeclaration, ExpressionNode rangeInitializer, List<ASTNode> body) {
         this.type = type;
         this.rangeDeclaration = rangeDeclaration;
         this.rangeInitializer = rangeInitializer;
@@ -65,12 +70,15 @@ public class IterationNode extends ASTNode{
         this.update = update;
     }
 
-    public ASTNode getBody() {
+    public List<ASTNode> getBody() {
         return body;
     }
 
-    public void setBody(ASTNode body) {
+    public void setBody(List<ASTNode> body) {
         this.body = body;
+    }
+    public void addBody(ASTNode node) {
+        this.body.add(node);
     }
     public ASTNode getRangeDeclaration() {
         return rangeDeclaration;
@@ -93,12 +101,17 @@ public class IterationNode extends ASTNode{
         if(type.equals("for")){
             StringBuilder sb = new StringBuilder();
             sb.append("IterationNode{");
-            sb.append("init="+init+",");
             sb.append("type='"+type+"',");
+            sb.append("init="+init+",");
             sb.append("condition="+condition+",");
             sb.append("update="+update+",");
-            sb.append("rangeDeclaration="+rangeDeclaration+",");
-            sb.append("rangeInitializer="+rangeInitializer+",");
+            sb.append("loop body=" + body + ",");
+            if (rangeDeclaration != null) {
+                sb.append("rangeDeclaration=" + rangeDeclaration + ",");
+            }
+            if (rangeInitializer != null) {
+                sb.append("rangeInitializer=" + rangeInitializer + ",");
+            }
             sb.append("}");
 
             return sb.toString();

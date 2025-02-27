@@ -3,14 +3,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
 
-public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode>{
+public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
     @Override
     public ASTNode visitTranslationUnit(CPP14Parser.TranslationUnitContext ctx) {
 
         List<ASTNode> declarations = new ArrayList<>();
 
         if (ctx.declarationseq() != null) {
-            for (CPP14Parser.DeclarationContext declaration : ctx.declarationseq().declaration()){
+            for (CPP14Parser.DeclarationContext declaration : ctx.declarationseq().declaration()) {
                 ASTNode node = visit(declaration);
                 if (node != null)
                     declarations.add(node);
@@ -22,7 +22,7 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode>{
     @Override
     public ASTNode visitDeclaration(CPP14Parser.DeclarationContext ctx) {
 
-        if(ctx.functionDefinition() != null) {
+        if (ctx.functionDefinition() != null) {
             return visitFunctionDefinition(ctx.functionDefinition());
         }
 
@@ -37,7 +37,7 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode>{
         visitDeclarator(ctx.declarator(), decl);
         FunctionNode functionNode = new FunctionNode(return_value, decl);
 
-        if(ctx.functionBody() != null) {
+        if (ctx.functionBody() != null) {
             visitFunctionBody(ctx.functionBody(), functionNode);
         }
         return functionNode;
@@ -63,7 +63,7 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode>{
 
         if (ctx.pointerOperator() != null) {
             StringBuilder sb = new StringBuilder();
-            for (CPP14Parser.PointerOperatorContext op : ctx.pointerOperator()){
+            for (CPP14Parser.PointerOperatorContext op : ctx.pointerOperator()) {
                 sb.append(op.getText());
             }
 
@@ -100,8 +100,7 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode>{
         CPP14Parser.ParameterDeclarationListContext paramList = ctx.parameterDeclarationList();
         if (paramList != null) {
             ArrayList<VariableDeclarationNode> list = new ArrayList<>();
-            for(CPP14Parser.ParameterDeclarationContext elem: paramList.parameterDeclaration())
-            {
+            for (CPP14Parser.ParameterDeclarationContext elem : paramList.parameterDeclaration()) {
 
                 String type = elem.declSpecifierSeq().getText();
                 DeclaratorNode name = new DeclaratorNode();
@@ -123,11 +122,11 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode>{
      */
     public ASTNode visitFunctionBody(CPP14Parser.FunctionBodyContext ctx, FunctionNode functionNode) {
         if (ctx.compoundStatement() != null) {
-            if(ctx.compoundStatement().statementSeq() != null) {
+            if (ctx.compoundStatement().statementSeq() != null) {
                 List<CPP14Parser.StatementContext> list = ctx.compoundStatement().statementSeq().statement();
-                for (CPP14Parser.StatementContext stmt : list){
+                for (CPP14Parser.StatementContext stmt : list) {
                     ASTNode node = visit(stmt);
-                    if( node != null ){
+                    if (node != null) {
                         functionNode.addBodyNode(node);
                     }
                 }
@@ -138,10 +137,11 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode>{
         return functionNode;
     }
 
+
     @Override
     public ASTNode visitStatement(CPP14Parser.StatementContext ctx) {
         if (ctx.compoundStatement() != null) {
-            return  visitCompoundStatement(ctx.compoundStatement());
+            return visitCompoundStatement(ctx.compoundStatement());
         }
 
         if (ctx.declarationStatement() != null) {
@@ -173,31 +173,38 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode>{
 
     private void visitIterationStatement(CPP14Parser.IterationStatementContext ctx, IterationNode iterationNode) {
 
-        if (ctx.While() != null) {
-            iterationNode.setType("while");
-        }else if(ctx.For() != null) {
-            System.out.println("This is for");
-            iterationNode.setType("for");
+        var type = ctx.children.getFirst().getText();
+        iterationNode.setType(type);
+
+        if (type.equals("for")) {
+
             visitForInitStatement(ctx.forInitStatement(), iterationNode);
-            if(ctx.condition()!= null) {
+
+            if (ctx.condition() != null) {
                 ExpressionNode condition = (ExpressionNode) visitExpression(ctx.condition().expression());
                 iterationNode.setCondition(condition);
             }
-            if(ctx.expression()!= null) {
+            if (ctx.expression() != null) {
                 ExpressionNode exp = (ExpressionNode) visitExpression(ctx.expression());
                 iterationNode.setUpdate(exp);
             }
-            if(ctx.forRangeDeclaration() != null) {
-                visitForRangeDeclaration(ctx.forRangeDeclaration(), iterationNode);
-            }
-            if(ctx.forRangeInitializer() != null) {
-                visitForRangeInitializer(ctx.forRangeInitializer(), iterationNode);
-            }
 
-        }else if(ctx.Do() != null){
-            iterationNode.setType("do");
+            if (ctx.statement() != null) {
+
+                if (ctx.statement().compoundStatement().statementSeq() != null) {
+                    List<CPP14Parser.StatementContext> list = ctx.statement().compoundStatement().statementSeq().statement();
+                    for (CPP14Parser.StatementContext stmt : list) {
+                        ASTNode node = visit(stmt);
+                        if (node != null) {
+                            iterationNode.addBody(node);
+                        }
+                    }
+                }
+            }
         }
     }
+
+
     private void visitForRangeDeclaration(CPP14Parser.ForRangeDeclarationContext ctx, IterationNode iterationNode) {
         //TODO change this
         System.out.println("This is  for range declaration");
