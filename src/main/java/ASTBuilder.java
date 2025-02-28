@@ -122,15 +122,8 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
      */
     public ASTNode visitFunctionBody(CPP14Parser.FunctionBodyContext ctx, FunctionNode functionNode) {
         if (ctx.compoundStatement() != null) {
-            if (ctx.compoundStatement().statementSeq() != null) {
-                List<CPP14Parser.StatementContext> list = ctx.compoundStatement().statementSeq().statement();
-                for (CPP14Parser.StatementContext stmt : list) {
-                    ASTNode node = visit(stmt);
-                    if (node != null) {
-                        functionNode.addBodyNode(node);
-                    }
-                }
-            }
+            CompoundNode cn = visitCompoundStatement(ctx.compoundStatement());
+            functionNode.setBody(cn.getStatements());
         }
         // TODO check if we need anything else in this function instead of compoundStatement
 
@@ -171,6 +164,24 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
         return null;
     }
 
+    @Override
+    public CompoundNode visitCompoundStatement(CPP14Parser.CompoundStatementContext ctx) {
+
+        CompoundNode cn = new CompoundNode();
+
+        if (ctx.statementSeq() != null) {
+            List<CPP14Parser.StatementContext> stmts = ctx.statementSeq().statement();
+            for (CPP14Parser.StatementContext stmt : stmts) {
+                ASTNode node = visit(stmt);
+                if (node != null) {
+                    cn.add(node);
+                }
+            }
+        }
+
+        return cn;
+    }
+
     private void visitIterationStatement(CPP14Parser.IterationStatementContext ctx, IterationNode iterationNode) {
 
         var type = ctx.children.getFirst().getText();
@@ -191,14 +202,10 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
 
             if (ctx.statement() != null) {
 
-                if (ctx.statement().compoundStatement().statementSeq() != null) {
-                    List<CPP14Parser.StatementContext> list = ctx.statement().compoundStatement().statementSeq().statement();
-                    for (CPP14Parser.StatementContext stmt : list) {
-                        ASTNode node = visit(stmt);
-                        if (node != null) {
-                            iterationNode.addBody(node);
-                        }
-                    }
+                ASTNode cn = visitStatement(ctx.statement());
+                if (cn != null && cn instanceof CompoundNode) {
+
+                    iterationNode.setBody(((CompoundNode) cn).getStatements());
                 }
             }
         }

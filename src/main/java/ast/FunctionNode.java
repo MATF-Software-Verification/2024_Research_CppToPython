@@ -7,7 +7,7 @@ public class FunctionNode extends ASTNode{
 
     private final String return_value;
     private  DeclaratorNode func_declarator; // Name of function and parameters
-    private final List<ASTNode> body;
+    private List<ASTNode> body;
 
     public FunctionNode(String return_value, DeclaratorNode declarator) {
         this.body = new ArrayList<>();
@@ -32,6 +32,10 @@ public class FunctionNode extends ASTNode{
 
     public List<ASTNode> getBody() {
         return body;
+    }
+
+    public void setBody(List<ASTNode> body) {
+        this.body = body;
     }
 
     @Override

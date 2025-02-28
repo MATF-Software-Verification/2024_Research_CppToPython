@@ -20,7 +20,7 @@ public class LiteralNode extends ASTNode {
 
     @Override
     public String toString() {
-        return "LiteralNode{ " + value + " }";
+        return "LiteralNode( " + value + " )";
     }
 
     @Override
