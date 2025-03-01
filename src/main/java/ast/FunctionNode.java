@@ -22,6 +22,7 @@ public class FunctionNode extends ASTNode{
     public ASTNode getFunc_declarator() {
         return func_declarator;
     }
+
     public void setFunc_declarator(DeclaratorNode func_declarator) {
         this.func_declarator = func_declarator;
     }
@@ -66,30 +67,30 @@ public class FunctionNode extends ASTNode{
     public String toPython(int ident) {
 
         StringBuilder sb = new StringBuilder();
-        for (int i=0; i <ident;i++){
-            sb.append("\t");
-        }
-        sb.append("def ");
-        sb.append(func_declarator.getDeclaratorId());
-        sb.append("(");
+        StringBuilder code = new StringBuilder();
+        code.append("def ");
+        code.append(func_declarator.getDeclaratorId());
+        code.append("(");
         if(func_declarator.getParameters() != null) {
             for (int i = 0; i < func_declarator.getParameters().size(); i++) {
 
                 VariableDeclarationNode param = func_declarator.getParameters().get(i);
                 String name = param.getName().getDeclaratorId();
                 if (i < func_declarator.getParameters().size() - 1) {
-                    sb.append(name + ",");
+                    code.append(name + ",");
                 } else {
-                    sb.append(name);
+                    code.append(name);
                 }
             }
         }
-        sb.append("): \n");
+        code.append("):");
+        sb.append(getIndentedPythonCode(ident, code.toString()));
         for(ASTNode node : body){
-            sb.append(node.toPython(ident + 1));
-            sb.append("\n");
+            sb.append(getIndentedPythonCode(ident+1,node.toPython(0)));
         }
 
         return sb.toString();
     }
+
+
 }

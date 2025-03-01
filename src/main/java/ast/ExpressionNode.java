@@ -26,7 +26,6 @@ public class ExpressionNode extends ASTNode {
     public void setType(String type) { this.type = type; }
     public void setOperator(String operator) { this.operator = operator; }
     public void setChildren(List<ASTNode> children) { this.children = children; }
-
     public void addChild(ASTNode child) { children.add(child); }
 
     @Override

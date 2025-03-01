@@ -34,6 +34,9 @@ public class VariableDeclarationNode extends ASTNode {
     public DeclaratorNode getName() {
         return name;
     }
+    public String getNameOut(){
+        return name.getDeclaratorId();
+    }
 
     public void setName(DeclaratorNode name) {
         this.name = name;
@@ -41,6 +44,19 @@ public class VariableDeclarationNode extends ASTNode {
 
     public ASTNode getExpression() {
         return expression;
+    }
+    public String getExpressionOut(){
+        ExpressionNode exp = (ExpressionNode) expression;
+        if(!exp.getChildren().isEmpty()){
+            if(exp.getChildren().size() == 1){
+                System.out.println("Ovo");
+                return ((LiteralNode)(exp.getChildren().get(0))).getValue();
+            }
+            else{
+                return ((LiteralNode)(exp.getChildren().get(1))).getValue();
+            }
+        }
+        return expression.toString();
     }
 
     public void setExpression(ASTNode expression) {
