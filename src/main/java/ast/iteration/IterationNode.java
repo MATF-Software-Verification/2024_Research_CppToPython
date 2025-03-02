@@ -7,17 +7,13 @@ import java.util.List;
 public abstract class IterationNode extends ASTNode {
 
 
-    public List<ASTNode> body;
+    public ASTNode body;
 
-    public List<ASTNode> getBody() {
+    public ASTNode getBody() {
         return body;
     }
-
-    public void setBody(List<ASTNode> body) {
+    public void setBody(ASTNode body) {
         this.body = body;
-    }
-    public void addBody(ASTNode node) {
-        this.body.add(node);
     }
 
 

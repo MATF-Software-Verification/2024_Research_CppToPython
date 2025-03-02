@@ -198,6 +198,7 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
                     ASTNode expr = visitExpression(ctx.expression());
                     forNode.setExpression(expr);
                 }
+                forNode.body = visitStatement(ctx.statement());
 
             }else{
                 ForRangeNode forRangeNode = new ForRangeNode();

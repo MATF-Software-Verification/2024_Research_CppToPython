@@ -6,7 +6,8 @@ int main(){
     int x = 1;
     for (int i =1; i < 50; ++i){
 
-        x += i;
+        x = 6+ i;
+        y = 5 < 3;
 
     }
 

@@ -23,12 +23,25 @@ public class CompoundNode extends ASTNode{
         statements.add(statement);
     }
 
+   // body= CompoundNode{statements=[Expression:[ operator: += ] [value: x+=i]
+    // children: [Expression: [value: x] children: [LiteralNode( x )]],
+    // Expression: [value: i] children: [LiteralNode( i )]]]],
+    // Expression:[ type : ShiftExpression ] [value: std::cout<<'Pardon'<<endl]
+    // children: [Expression: [value: std::cout] children: [LiteralNode( std::cout )]],
+    // Expression: [value: 'Pardon'] children: [LiteralNode( 'Pardon' )]],
+    // Expression: [value: endl] children: [LiteralNode( endl )]]]]]}
+    // , Expression:[ type : return ] [value: x] children: [LiteralNode( x )]]]}]}
+    //    ------------------------
+
     @Override
     public String toString() {
 
         StringBuilder sb = new StringBuilder();
-        sb.append("CompoundNode{");
-        sb.append("statements=").append(statements);
+        sb.append("CompoundNode{\n");
+        for (ASTNode statement : statements) {
+            sb.append(statement);
+            sb.append("\n");
+        }
         sb.append("}");
 
         return sb.toString();
@@ -36,6 +49,15 @@ public class CompoundNode extends ASTNode{
 
     @Override
     public String toPython(int indent) {
-        return "";
+
+        StringBuilder sb = new StringBuilder();
+
+        for (ASTNode statement : statements) {
+            StringBuilder line = new StringBuilder();
+            line.append(getIndentedPythonCode(indent,statement.toPython(indent)));
+            sb.append(line);
+        }
+
+        return sb.toString();
     }
 }

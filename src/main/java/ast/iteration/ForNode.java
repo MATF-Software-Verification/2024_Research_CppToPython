@@ -12,9 +12,6 @@ public class ForNode extends IterationNode {
     private ASTNode condition;
     private ASTNode expression;
 
-    // For range
-
-
     public ForNode(){
         super();
     }
@@ -57,11 +54,8 @@ public class ForNode extends IterationNode {
         StringBuilder sb = new StringBuilder();
         sb.append("ForNode [initialStatement=" + initialStatement + ", condition=" + condition + ", expression=" + expression);
         sb.append(" body= ");
-        if (body != null) {
-            for (ASTNode node : body) {
-                sb.append(node.toString());
-            }
-        }
+        sb.append(body.toString());
+
         sb.append("\n");
         return sb.toString();
     }
@@ -84,9 +78,8 @@ public class ForNode extends IterationNode {
         }
         sb.append(getIndentedPythonCode(indent,line.toString()));
         if (body != null) {
-            for (ASTNode node : body) {
-                sb.append(node.toPython(indent+1));
-            }
+                sb.append(body.toPython(indent+1));
+
         }
 
         return sb.toString();

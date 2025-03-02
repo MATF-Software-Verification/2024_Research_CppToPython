@@ -46,17 +46,9 @@ public class VariableDeclarationNode extends ASTNode {
         return expression;
     }
     public String getExpressionOut(){
+        //TODO fix probably needed
         ExpressionNode exp = (ExpressionNode) expression;
-        if(!exp.getChildren().isEmpty()){
-            if(exp.getChildren().size() == 1){
-                System.out.println("Ovo");
-                return ((LiteralNode)(exp.getChildren().get(0))).getValue();
-            }
-            else{
-                return ((LiteralNode)(exp.getChildren().get(1))).getValue();
-            }
-        }
-        return expression.toString();
+        return exp.getValue();
     }
 
     public void setExpression(ASTNode expression) {
@@ -89,12 +81,16 @@ public class VariableDeclarationNode extends ASTNode {
     public String toPython(int indent) {
 
         StringBuilder sb = new StringBuilder();
-        for(int i = 0; i < indent; i++){
-            sb.append("\t");
+        StringBuilder line = new StringBuilder();
+
+        line.append(getNameOut());
+        line.append(" = ");
+        if (expression != null) {
+            line.append(getExpressionOut());
         }
-        sb.append(name.toPython(0));
-        sb.append(" = ");
-        sb.append(expression.toPython(0));
+
+        sb.append(getIndentedPythonCode(indent,line.toString()));
+
         return sb.toString();
     }
 }

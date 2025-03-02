@@ -49,6 +49,8 @@ public class ExpressionNode extends ASTNode {
 
     @Override
     public String toPython(int ident) {
+
+
         StringBuilder sb = new StringBuilder();
         if(type == null && operator == null){
 
@@ -67,6 +69,12 @@ public class ExpressionNode extends ASTNode {
                     sb.append(children.get(i).toPython(0));
                 }
             }
+        }
+        if(type != null && type.equals("AdditiveExpression")){
+            sb.append(value);
+        }
+        if(type != null && type.equals("RelationalExpression")){
+            sb.append(value);
         }
         return sb.toString();
     }
