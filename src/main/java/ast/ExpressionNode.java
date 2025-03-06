@@ -76,6 +76,30 @@ public class ExpressionNode extends ASTNode {
         if(type != null && type.equals("RelationalExpression")){
             sb.append(value);
         }
+
+        if (type != null && type.equals("LogicalAndExpression")){
+            String formatted = value.replace("&&", " and ");
+            sb.append(formatted);
+        }
+
+        if (type != null && type.equals("LogicalOrExpression")){
+            String formatted = value.replace("||", " or ");
+            sb.append(formatted);
+        }
+
+        if (type != null && type.equals("ShiftExpression")){
+            String formatted = value.replace("std::cout<<", "").replace("<<std::endl", "").trim();
+            formatted = formatted.replace("\\s*<<\\s*", ", ");
+
+            String pyStatement = "print(" + formatted + ")";
+            sb.append(pyStatement);
+
+        }
+
+        if (type != null && type.equals("EqualityExpression")){
+            String formatted = value.replace("==", " == ");
+            sb.append(formatted);
+        }
         return sb.toString();
     }
 }

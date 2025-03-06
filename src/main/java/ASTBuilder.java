@@ -128,7 +128,6 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
             CompoundNode cn = visitCompoundStatement(ctx.compoundStatement());
             functionNode.setBody(cn.getStatements());
         }
-        // TODO check if we need anything else in this function instead of compoundStatement
 
         return functionNode;
     }
@@ -160,6 +159,10 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
 
         if (ctx.iterationStatement() != null) {
             return visitIterationStatement(ctx.iterationStatement());
+        }
+
+        if (ctx.selectionStatement() != null) {
+            return visitSelectionStatement(ctx.selectionStatement());
         }
         // TODO add other statements
         return null;
@@ -198,7 +201,7 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
                     ASTNode expr = visitExpression(ctx.expression());
                     forNode.setExpression(expr);
                 }
-                forNode.body = visitStatement(ctx.statement());
+                forNode.setBody(visitStatement(ctx.statement()));
 
             }else{
                 ForRangeNode forRangeNode = new ForRangeNode();
@@ -235,11 +238,10 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
 
     }
     private void visitForInitStatement(CPP14Parser.ForInitStatementContext ctx, ForNode forNode) {
-        System.out.println("This is  for init statement");
         if (ctx.expressionStatement() != null) {
             System.out.println("Setting condition");
             ExpressionNode expr = (ExpressionNode) visitExpression(ctx.expressionStatement().expression());
-            forNode.setCondition(expr);
+            forNode.setInitialStatement(expr);
         }else if(ctx.simpleDeclaration() != null) {
             System.out.println("Setting simple declaration");
             VariableDeclarationNode var = new VariableDeclarationNode();
@@ -247,6 +249,23 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
             forNode.setInitialStatement(var);
         }
     }
+
+    @Override
+    public ASTNode visitSelectionStatement(CPP14Parser.SelectionStatementContext ctx) {
+
+        String type = ctx.children.getFirst().getText();
+        ExpressionNode condition = (ExpressionNode)visitExpression(ctx.condition().expression());
+        ASTNode then = visitStatement(ctx.statement().getFirst());
+
+        SelectionNode selection = new SelectionNode(type, condition, then);
+
+        if (ctx.Else() != null) {
+            ASTNode elseNode = visitStatement(ctx.statement().get(1));
+            selection.setElseBranch(elseNode);
+        }
+        return selection;
+    }
+
     private void visitDeclarationStatement(CPP14Parser.DeclarationStatementContext ctx, VariableDeclarationNode variable) {
         if(ctx.blockDeclaration() != null) {
             visitBlockDeclaration(ctx.blockDeclaration(), variable);
@@ -464,7 +483,6 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
     }
 
     private void visitAdditiveExpression(CPP14Parser.AdditiveExpressionContext ctx, ExpressionNode expression) {
-        System.out.println("Visiting AdditiveExpression");
         String value = ctx.getText();
         visitExpression_template(
                 ctx.multiplicativeExpression(),

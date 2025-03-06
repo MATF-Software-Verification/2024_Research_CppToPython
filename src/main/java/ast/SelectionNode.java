@@ -28,6 +28,14 @@ public class SelectionNode extends ASTNode {
         this.cases = cases;
     }
 
+    public void setElseBranch(ASTNode elseBranch) {
+        this.elseBranch = elseBranch;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
     public String getType() {
         return type;
     }
@@ -57,7 +65,7 @@ public class SelectionNode extends ASTNode {
         StringBuilder sb = new StringBuilder();
         sb.append(type);
         if (condition != null) {
-            sb.append(" (").append(condition).append(")");
+            sb.append(" Condition(").append(condition).append(")");
         }
         sb.append(" { ").append(thenBranch).append(" }");
         if (elseBranch != null) {
@@ -71,6 +79,24 @@ public class SelectionNode extends ASTNode {
 
     @Override
     public String toPython(int indent) {
-        return "";
+        StringBuilder sb = new StringBuilder();
+        StringBuilder line = new StringBuilder();
+
+        line.append(this.type + " ");
+        line.append(this.condition.toPython(indent) + ":");
+
+        sb.append(getIndentedPythonCode(indent,line.toString()));
+        sb.append(getIndentedPythonCode(indent + 1, this.thenBranch.toPython(indent)));
+
+        if (elseBranch != null && elseBranch instanceof SelectionNode) {
+            ((SelectionNode) elseBranch).setType("elif");
+            sb.append(getIndentedPythonCode(indent, this.elseBranch.toPython(indent)));
+        }
+        else{
+            sb.append(getIndentedPythonCode(indent, getIndentedPythonCode(indent, "else:")));
+            sb.append(getIndentedPythonCode(indent, getIndentedPythonCode(indent, this.elseBranch.toPython(indent))));
+        }
+
+        return sb.toString();
     }
 }
