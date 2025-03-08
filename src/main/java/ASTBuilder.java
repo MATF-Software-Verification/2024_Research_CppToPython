@@ -1,6 +1,7 @@
 import ast.*;
 import ast.iteration.ForNode;
 import ast.iteration.ForRangeNode;
+import ast.iteration.WhileNode;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -152,9 +153,12 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
         }
 
         if (ctx.jumpStatement() != null) {
-            ExpressionNode expr = (ExpressionNode) visitJumpStatement(ctx.jumpStatement());
-            expr.setType("return");
-            return expr;
+            ASTNode statement = visitJumpStatement(ctx.jumpStatement());
+            if (statement instanceof ExpressionNode) {
+                ExpressionNode expr = (ExpressionNode) visitJumpStatement(ctx.jumpStatement());
+                expr.setType("return");
+            }
+            return statement;
         }
 
         if (ctx.iterationStatement() != null) {
@@ -195,7 +199,7 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
             if(ctx.forInitStatement() != null) {
                 visitForInitStatement(ctx.forInitStatement(), forNode);
                 if(ctx.condition() != null) {
-                    visitForCondition(ctx.condition(),forNode);
+                    visitCondition(ctx.condition(),forNode);
                 }
                 if(ctx.expression() != null) {
                     ASTNode expr = visitExpression(ctx.expression());
@@ -210,14 +214,32 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
             }
             return forNode;
         }
+        if(type.equals("while")) {
+            WhileNode whileNode = new WhileNode();
+            if(ctx.condition() != null) {
+                  visitCondition(ctx.condition(),whileNode);
+            }
+            if(ctx.statement() != null) {
+                whileNode.setBody(visitStatement(ctx.statement()));
+            }
+
+            return whileNode;
+        }
         return null;
     }
 
-    private void visitForCondition(CPP14Parser.ConditionContext ctx, ForNode forNode) {
+    private void visitCondition(CPP14Parser.ConditionContext ctx, ForNode forNode) {
 
         if(ctx.expression() != null) {
             ASTNode expr = visitExpression(ctx.expression());
             forNode.setCondition(expr);
+        }
+    }
+    private void visitCondition(CPP14Parser.ConditionContext ctx, WhileNode whileNode) {
+
+        if(ctx.expression() != null) {
+            ASTNode expr = visitExpression(ctx.expression());
+            whileNode.setCondition(expr);
         }
     }
 
@@ -335,13 +357,25 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
     @Override
     public ASTNode visitJumpStatement(CPP14Parser.JumpStatementContext ctx) {
 
-        ExpressionNode expr = (ExpressionNode) visitExpression(ctx.expression());
-        return expr;
+        if(ctx.expression() != null) {
+            ExpressionNode expr = (ExpressionNode) visitExpression(ctx.expression());
+            return expr;
+        }
+        if(ctx.Break() != null) {
+
+            TermNode term = new TermNode("break");
+            return term;
+        }
+
+        return null;
     }
 
     public ASTNode visitExpression(CPP14Parser.ExpressionContext ctx) {
         //TODO check if this should change
-        return visitAssignmentExpression(ctx.assignmentExpression(0));
+        if(ctx.assignmentExpression() != null) {
+            return visitAssignmentExpression(ctx.assignmentExpression(0));
+        }
+        return null;
     }
 
     public ASTNode visitAssignmentExpression(CPP14Parser.AssignmentExpressionContext ctx) {
