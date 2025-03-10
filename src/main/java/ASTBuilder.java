@@ -278,9 +278,39 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
         SelectionNode selection = new SelectionNode(type, condition, then);
 
         if (ctx.Else() != null) {
-            ASTNode elseNode = visitStatement(ctx.statement().get(1));
+            ASTNode elseNode = visitSelectionStatementLevels(ctx.statement().get(1), 1);
             selection.setElseBranch(elseNode);
         }
+        return selection;
+    }
+
+    private ASTNode visitSelectionStatementLevels(CPP14Parser.StatementContext ctx, int lvl){
+
+        SelectionNode selection = new SelectionNode();
+
+        if (ctx.selectionStatement() != null) {
+            CPP14Parser.SelectionStatementContext context = ctx.selectionStatement();
+            ExpressionNode condition = (ExpressionNode)visitExpression(context.condition().expression());
+            System.out.println("OVO JE DJURE");
+            System.out.println(condition);
+            System.out.println("OVO JE DJURE");
+            selection.setType("elseif");
+            selection.setCondition(condition);
+            if(context.statement() != null) {
+                ASTNode then = visitStatement(context.statement().getFirst());
+                selection.setThenBranch(then);
+            }
+            if(context.Else() != null) {
+                ASTNode elseNode = visitSelectionStatementLevels(context.statement().get(1),lvl+1);
+                selection.setElseBranch(elseNode);
+            }
+        }else{
+            selection.setType("else");
+            selection.setCondition(null);
+            selection.setThenBranch(visitStatement(ctx));
+            return selection;
+        }
+
         return selection;
     }
 

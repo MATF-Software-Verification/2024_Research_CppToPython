@@ -11,6 +11,8 @@ public class SelectionNode extends ASTNode {
     private ASTNode elseBranch; // the "else" branch or the next "else if"
     private ArrayList<CaseNode> cases; // for "switch", a list of cases, null for "if(s)"
 
+
+    public SelectionNode(){}
     public SelectionNode(String type, ExpressionNode condition, ASTNode thenBranch) {
         this.type = type;
         this.condition = condition;
@@ -44,9 +46,11 @@ public class SelectionNode extends ASTNode {
         return condition;
     }
 
+    public void setCondition(ExpressionNode condition) { this.condition = condition; }
     public ASTNode getThenBranch() {
         return thenBranch;
     }
+    public void setThenBranch(ASTNode thenBranch) {this.thenBranch = thenBranch;}
 
     public ASTNode getElseBranch() {
         return elseBranch;
@@ -63,13 +67,14 @@ public class SelectionNode extends ASTNode {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
+        sb.append("SelectionNode[ type = ");
         sb.append(type);
         if (condition != null) {
-            sb.append(" Condition(").append(condition).append(")");
+            sb.append(" Condition = [").append(condition).append("]");
         }
-        sb.append(" { ").append(thenBranch).append(" }");
+        sb.append(" THEN[ ").append(thenBranch).append(" ]");
         if (elseBranch != null) {
-            sb.append(" else { ").append(elseBranch).append(" }");
+            sb.append(" ELSE [ ").append(elseBranch).append(" ]");
         }
         if (cases != null && !cases.isEmpty()) {
             sb.append(" cases: ").append(cases);
@@ -82,20 +87,24 @@ public class SelectionNode extends ASTNode {
         StringBuilder sb = new StringBuilder();
         StringBuilder line = new StringBuilder();
 
-        line.append(this.type + " ");
-        line.append(this.condition.toPython(indent) + ":");
-
-        sb.append(getIndentedPythonCode(indent,line.toString()));
-        sb.append(getIndentedPythonCode(indent + 1, this.thenBranch.toPython(indent)));
-
-        if (elseBranch != null && elseBranch instanceof SelectionNode) {
-            System.out.println("INDENT IN ELSE IF : " + indent);
-            ((SelectionNode) elseBranch).setType("elif");
+        if(type != null && type.equals("if") && condition != null && thenBranch != null ) {
+            line.append(this.type + " ");
+            line.append(this.condition.toPython(indent) + ":");
+            sb.append(getIndentedPythonCode(indent,line.toString()));
+            sb.append(getIndentedPythonCode(indent + 1, this.thenBranch.toPython(indent)));
+            sb.append(getIndentedPythonCode(indent, this.elseBranch.toPython(indent)));
+        }else if(type != null && type.equals("elseif") && thenBranch != null && elseBranch != null && condition != null) {
+            line.append("elif ");
+            line.append(this.condition.toPython(indent) + ":");
+            sb.append(getIndentedPythonCode(indent,line.toString()));
+            sb.append(getIndentedPythonCode(indent, this.thenBranch.toPython(indent)));
             sb.append(getIndentedPythonCode(indent, this.elseBranch.toPython(indent)));
         }
-        else{
-            sb.append(getIndentedPythonCode(indent, getIndentedPythonCode(indent, "else:")));
-            sb.append(getIndentedPythonCode(indent, getIndentedPythonCode(indent, this.elseBranch.toPython(indent))));
+        if(type!= null && type.equals("else") && thenBranch != null){
+            line.append(this.type);
+            line.append(":");
+            sb.append(getIndentedPythonCode(indent,line.toString()));
+            sb.append(getIndentedPythonCode(indent, this.thenBranch.toPython(indent)));
         }
 
         return sb.toString();
