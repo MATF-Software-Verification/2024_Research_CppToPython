@@ -48,7 +48,7 @@ public class ExpressionNode extends ASTNode {
     }
 
     @Override
-    public String toPython(int ident) {
+    public String toPython(int indent) {
 
 
         StringBuilder sb = new StringBuilder();
@@ -59,7 +59,7 @@ public class ExpressionNode extends ASTNode {
             }
         }
         if(type != null && type.equals("return")){
-            for(int i=0; i<ident; i++){
+            for(int i=0; i<indent; i++){
                 sb.append("\t");
             }
             sb.append("return ");
@@ -71,7 +71,7 @@ public class ExpressionNode extends ASTNode {
             }
         }
         if(type != null && type.equals("AdditiveExpression")){
-            sb.append(value);
+            sb.append(getIndentedPythonCode(indent,value));
         }
         if(type != null && type.equals("RelationalExpression")){
             sb.append(value);

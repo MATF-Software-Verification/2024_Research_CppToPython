@@ -89,6 +89,7 @@ public class VariableDeclarationNode extends ASTNode {
             line.append(getExpressionOut());
         }
 
+        System.out.println("INDENT IN VARIABLE DECLARATION: " + indent);
         sb.append(getIndentedPythonCode(indent,line.toString()));
 
         return sb.toString();

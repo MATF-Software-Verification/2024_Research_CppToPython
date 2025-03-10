@@ -216,12 +216,8 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
         }
         if(type.equals("while")) {
             WhileNode whileNode = new WhileNode();
-            if(ctx.condition() != null) {
-                  visitCondition(ctx.condition(),whileNode);
-            }
-            if(ctx.statement() != null) {
-                whileNode.setBody(visitStatement(ctx.statement()));
-            }
+            visitCondition(ctx.condition(),whileNode);
+            whileNode.setBody(visitStatement(ctx.statement()));
 
             return whileNode;
         }

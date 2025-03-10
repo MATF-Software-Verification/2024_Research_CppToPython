@@ -25,6 +25,6 @@ public class LiteralNode extends ASTNode {
 
     @Override
     public String toPython(int indent) {
-        return value;
+        return getIndentedPythonCode(indent,value);
     }
 }

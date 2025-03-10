@@ -89,6 +89,7 @@ public class SelectionNode extends ASTNode {
         sb.append(getIndentedPythonCode(indent + 1, this.thenBranch.toPython(indent)));
 
         if (elseBranch != null && elseBranch instanceof SelectionNode) {
+            System.out.println("INDENT IN ELSE IF : " + indent);
             ((SelectionNode) elseBranch).setType("elif");
             sb.append(getIndentedPythonCode(indent, this.elseBranch.toPython(indent)));
         }

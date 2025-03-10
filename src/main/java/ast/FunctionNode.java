@@ -7,7 +7,7 @@ public class FunctionNode extends ASTNode{
 
     private final String return_value;
     private  DeclaratorNode func_declarator; // Name of function and parameters
-    private List<ASTNode> body;
+    private List<ASTNode> body; //TODO change to CompoundNode later.
 
     public FunctionNode(String return_value, DeclaratorNode declarator) {
         this.body = new ArrayList<>();
@@ -64,7 +64,7 @@ public class FunctionNode extends ASTNode{
     }
 
     @Override
-    public String toPython(int ident) {
+    public String toPython(int indent) {
 
         StringBuilder sb = new StringBuilder();
         StringBuilder code = new StringBuilder();
@@ -84,9 +84,9 @@ public class FunctionNode extends ASTNode{
             }
         }
         code.append("):");
-        sb.append(getIndentedPythonCode(ident, code.toString()));
+        sb.append(getIndentedPythonCode(indent, code.toString()));
         for(ASTNode node : body){
-            sb.append(getIndentedPythonCode(ident+1,node.toPython(0)));
+            sb.append(getIndentedPythonCode(indent + 1,node.toPython(0)));
         }
 
         return sb.toString();
