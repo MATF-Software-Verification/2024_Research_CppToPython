@@ -43,10 +43,10 @@ public class WhileNode  extends  IterationNode {
             line.append(((ExpressionNode)getCondition()).getValue());
         }
 
-        line.append(" :");
+        line.append(":");
         sb.append(getIndentedPythonCode(indent,line.toString()));
         if(body != null){
-            sb.append(body.toPython(indent + 1));
+            sb.append(getIndentedPythonCode(indent + 1, body.toPython(indent)));
         }
 
         return sb.toString();

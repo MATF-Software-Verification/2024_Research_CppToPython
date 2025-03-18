@@ -7,10 +7,10 @@ public class FunctionNode extends ASTNode{
 
     private final String return_value;
     private  DeclaratorNode func_declarator; // Name of function and parameters
-    private List<ASTNode> body; //TODO change to CompoundNode later.
+    private CompoundNode body; //TODO change to CompoundNode later.
 
     public FunctionNode(String return_value, DeclaratorNode declarator) {
-        this.body = new ArrayList<>();
+//        this.body = new ArrayList<>();
         this.return_value = return_value;
         this.func_declarator = declarator;
     }
@@ -31,11 +31,11 @@ public class FunctionNode extends ASTNode{
         return return_value;
     }
 
-    public List<ASTNode> getBody() {
+    public CompoundNode getBody() {
         return body;
     }
 
-    public void setBody(List<ASTNode> body) {
+    public void setBody(CompoundNode body) {
         this.body = body;
     }
 
@@ -54,7 +54,7 @@ public class FunctionNode extends ASTNode{
             sb.append(", parameters: ").append(func_declarator.getParameters());
         }
 
-        if(body.size() > 0){
+        if(body != null ){
             sb.append(", body: ").append(body);
         }
 
@@ -85,9 +85,7 @@ public class FunctionNode extends ASTNode{
         }
         code.append("):");
         sb.append(getIndentedPythonCode(indent, code.toString()));
-        for(ASTNode node : body){
-            sb.append(getIndentedPythonCode(indent + 1,node.toPython(0)));
-        }
+        sb.append(getIndentedPythonCode(indent, body.toPython(indent)));
 
         return sb.toString();
     }

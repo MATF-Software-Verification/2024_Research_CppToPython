@@ -78,7 +78,7 @@ public class ForNode extends IterationNode {
         }
         sb.append(getIndentedPythonCode(indent,line.toString()));
         if (body != null) {
-                sb.append(body.toPython(indent+1));
+            sb.append(getIndentedPythonCode(indent + 1, body.toPython(indent)));
 
         }
 

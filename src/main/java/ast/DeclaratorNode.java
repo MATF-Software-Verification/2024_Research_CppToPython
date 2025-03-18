@@ -52,14 +52,12 @@ public class DeclaratorNode extends ASTNode{
         return sb.toString();
     }
     @Override
-    public String toPython(int ident) {
+    public String toPython(int indent) {
         StringBuilder sb = new StringBuilder();
 
         if(parameters == null){
-            for(int i =0; i<ident; i++){
-                sb.append("\t");
-            }
-            sb.append(declaratorId);
+
+            sb.append(getIndentedPythonCode(indent,declaratorId));
         }
 
         return sb.toString();

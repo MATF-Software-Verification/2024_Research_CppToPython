@@ -52,26 +52,26 @@ public class ExpressionNode extends ASTNode {
 
 
         StringBuilder sb = new StringBuilder();
-        if(type == null && operator == null){
-
-            for(int i=0; i < children.size(); i++){
-                sb.append(children.get(i).toPython(0));
-            }
-        }
-        if(type != null && type.equals("return")){
-            for(int i=0; i<indent; i++){
-                sb.append("\t");
-            }
-            sb.append("return ");
-
-            if(operator == null){
-                for(int i=0; i < children.size(); i++){
-                    sb.append(children.get(i).toPython(0));
-                }
-            }
-        }
+//        if(type == null && operator == null){
+//
+//            for(int i=0; i < children.size(); i++){
+//                sb.append(children.get(i).toPython(0));
+//            }
+//        }
+//        if(type != null && type.equals("return")){
+//            for(int i=0; i<indent; i++){
+//                sb.append("\t");
+//            }
+//            sb.append("return ");
+//
+//            if(operator == null){
+//                for(int i=0; i < children.size(); i++){
+//                    sb.append(children.get(i).toPython(0));
+//                }
+//            }
+//        }
         if(type != null && type.equals("AdditiveExpression")){
-            sb.append(getIndentedPythonCode(indent,value));
+            sb.append(value);
         }
         if(type != null && type.equals("RelationalExpression")){
             sb.append(value);
@@ -100,6 +100,11 @@ public class ExpressionNode extends ASTNode {
             String formatted = value.replace("==", " == ");
             sb.append(formatted);
         }
+
+        if (type != null && type.equals("MultiplicativeExpression")){
+            sb.append(value);
+        }
+
         return sb.toString();
     }
 }

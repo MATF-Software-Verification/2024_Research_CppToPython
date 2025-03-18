@@ -127,7 +127,7 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
     public ASTNode visitFunctionBody(CPP14Parser.FunctionBodyContext ctx, FunctionNode functionNode) {
         if (ctx.compoundStatement() != null) {
             CompoundNode cn = visitCompoundStatement(ctx.compoundStatement());
-            functionNode.setBody(cn.getStatements());
+            functionNode.setBody(cn);
         }
 
         return functionNode;
@@ -291,9 +291,7 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
         if (ctx.selectionStatement() != null) {
             CPP14Parser.SelectionStatementContext context = ctx.selectionStatement();
             ExpressionNode condition = (ExpressionNode)visitExpression(context.condition().expression());
-            System.out.println("OVO JE DJURE");
             System.out.println(condition);
-            System.out.println("OVO JE DJURE");
             selection.setType("elseif");
             selection.setCondition(condition);
             if(context.statement() != null) {

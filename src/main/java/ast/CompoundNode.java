@@ -54,7 +54,7 @@ public class CompoundNode extends ASTNode{
 
         for (ASTNode statement : statements) {
             StringBuilder line = new StringBuilder();
-            line.append(getIndentedPythonCode(indent,statement.toPython(indent)));
+            line.append(getIndentedPythonCode(indent + 1,statement.toPython(indent)));
             sb.append(line);
         }
 
