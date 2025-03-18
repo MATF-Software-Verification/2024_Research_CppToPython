@@ -452,6 +452,7 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
                 expression.addChild(tmp);
             }
         }else{
+            expression.setType(type);
             visitor.accept(list.getFirst(), expression);
         }
     }

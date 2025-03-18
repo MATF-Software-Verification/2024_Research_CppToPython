@@ -76,9 +76,10 @@ public class ForNode extends IterationNode {
             line.append(((ExpressionNode)((ExpressionNode)condition).getChildren().get(1)).getValue());
             line.append("):");
         }
-        sb.append(getIndentedPythonCode(indent,line.toString()));
+        System.out.println("for  : " + indent);
+        sb.append(getIndentedPythonCode(indent-1,line.toString()));
         if (body != null) {
-            sb.append(getIndentedPythonCode(indent + 1, body.toPython(indent)));
+            sb.append( body.toPython(indent+1));
 
         }
 

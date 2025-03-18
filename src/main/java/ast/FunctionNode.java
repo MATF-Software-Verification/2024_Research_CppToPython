@@ -85,7 +85,7 @@ public class FunctionNode extends ASTNode{
         }
         code.append("):");
         sb.append(getIndentedPythonCode(indent, code.toString()));
-        sb.append(getIndentedPythonCode(indent, body.toPython(indent)));
+        sb.append(body.toPython(indent+1));
 
         return sb.toString();
     }

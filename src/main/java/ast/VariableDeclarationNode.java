@@ -88,8 +88,6 @@ public class VariableDeclarationNode extends ASTNode {
         if (expression != null) {
             line.append(getExpressionOut());
         }
-
-        System.out.println("INDENT IN VARIABLE DECLARATION: " + indent);
         sb.append(line);
 
         return sb.toString();
