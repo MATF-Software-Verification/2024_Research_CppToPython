@@ -92,13 +92,17 @@ public class SelectionNode extends ASTNode {
             line.append(this.condition.toPython(indent) + ":");
             sb.append(line.toString() + '\n');
             sb.append(this.thenBranch.toPython(indent+1));
-            sb.append(getIndentedPythonCode(indent, this.elseBranch.toPython(indent)));
+            if (elseBranch != null) {
+                sb.append(getIndentedPythonCode(indent, this.elseBranch.toPython(indent)));
+            }
         }else if(type != null && type.equals("elseif") && thenBranch != null && elseBranch != null && condition != null) {
             line.append("elif ");
             line.append(this.condition.toPython(indent) + ":");
             sb.append(line.toString() + '\n');
             sb.append(this.thenBranch.toPython(indent+1));
-            sb.append(getIndentedPythonCode(indent, this.elseBranch.toPython(indent)));
+            if (elseBranch != null) {
+                sb.append(getIndentedPythonCode(indent, this.elseBranch.toPython(indent)));
+            }
         }
         if(type!= null && type.equals("else") && thenBranch != null){
             line.append(this.type);

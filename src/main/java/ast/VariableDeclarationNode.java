@@ -83,9 +83,9 @@ public class VariableDeclarationNode extends ASTNode {
         StringBuilder sb = new StringBuilder();
         StringBuilder line = new StringBuilder();
 
-        line.append(getNameOut());
-        line.append(" = ");
         if (expression != null) {
+            line.append(getNameOut());
+            line.append(" = ");
             line.append(getExpressionOut());
         }
         sb.append(line);

@@ -71,8 +71,8 @@ public class ExpressionNode extends ASTNode {
         }
 
         if (type != null && type.equals("ShiftExpression")){
-            String formatted = value.replace("std::cout<<", "").replace("<<std::endl", "").trim();
-            formatted = formatted.replace("\\s*<<\\s*", ", ");
+            String formatted = value.replace("std::cout<<", "").replace("std::endl", "'\\n'").trim();
+            formatted = formatted.replace("<<", " + ").trim();
 
             String pyStatement = "print(" + formatted + ")";
             sb.append(pyStatement);
