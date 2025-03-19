@@ -154,10 +154,10 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
 
         if (ctx.jumpStatement() != null) {
             ASTNode statement = visitJumpStatement(ctx.jumpStatement());
-            if (statement instanceof ExpressionNode) {
-                ExpressionNode expr = (ExpressionNode) visitJumpStatement(ctx.jumpStatement());
-                expr.setType("return");
-            }
+//            if (statement instanceof ExpressionNode) {
+//                ExpressionNode expr = (ExpressionNode) visitJumpStatement(ctx.jumpStatement());
+//                expr.setType("return");
+//            }
             return statement;
         }
 
@@ -381,14 +381,20 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
     @Override
     public ASTNode visitJumpStatement(CPP14Parser.JumpStatementContext ctx) {
 
-        if(ctx.expression() != null) {
-            ExpressionNode expr = (ExpressionNode) visitExpression(ctx.expression());
-            return expr;
+        if (ctx.Return() != null) {
+            TermNode term = new TermNode("return");
+
+            if (ctx.expression() != null) {
+                ASTNode expression = visitExpression(ctx.expression());
+                term.setExpression(expression);
+            }
+
+            return term;
         }
+
         if(ctx.Break() != null) {
 
-            TermNode term = new TermNode("break");
-            return term;
+            return new TermNode("break");
         }
 
         return null;
