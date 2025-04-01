@@ -63,11 +63,11 @@ public class VariableDeclarationNode extends ASTNode {
             sb.append("type: ").append(type).append(" ");
         }
 
-        if (name.getDeclaratorId() != null) {
+        if (name != null  && name.getDeclaratorId() != null) {
             sb.append("name: ").append(name.getDeclaratorId()).append(" ");
         }
 
-        if (name.getParameters() != null) {
+        if ( name != null && name.getParameters() != null) {
             sb.append("parameters: ").append(name.getParameters()).append(" ");
         }
 
@@ -83,12 +83,19 @@ public class VariableDeclarationNode extends ASTNode {
         StringBuilder sb = new StringBuilder();
         StringBuilder line = new StringBuilder();
 
-        if (expression != null) {
-            line.append(getNameOut());
-            line.append(" = ");
-            line.append(getExpressionOut());
+        if(type != null && type.equals("class")) {
+            sb.append(line);
+            sb.append(expression.toPython(indent));
+
         }
-        sb.append(line);
+        else {
+            if (expression != null) {
+                line.append(getNameOut());
+                line.append(" = ");
+                line.append(getExpressionOut());
+            }
+            sb.append(line);
+        }
 
         return sb.toString();
     }

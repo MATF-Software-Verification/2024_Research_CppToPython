@@ -8,11 +8,13 @@ public class FunctionNode extends ASTNode{
     private final String return_value;
     private  DeclaratorNode func_declarator; // Name of function and parameters
     private CompoundNode body; //TODO change to CompoundNode later.
+    private boolean in_class;
 
-    public FunctionNode(String return_value, DeclaratorNode declarator) {
+    public FunctionNode(String return_value, DeclaratorNode declarator, boolean in_class) {
 //        this.body = new ArrayList<>();
         this.return_value = return_value;
         this.func_declarator = declarator;
+        this.in_class = in_class;
     }
 
     public void addBodyNode(ASTNode node){
@@ -44,7 +46,9 @@ public class FunctionNode extends ASTNode{
 
         StringBuilder sb = new StringBuilder();
         sb.append("Function{");
-        sb.append("return_value=").append(return_value);
+        if(return_value != null){
+            sb.append("return_value=").append(return_value);
+        }
 
         if(func_declarator.getDeclaratorId() != null){
             sb.append(", name: ").append(func_declarator.getDeclaratorId());
@@ -71,6 +75,9 @@ public class FunctionNode extends ASTNode{
         code.append("def ");
         code.append(func_declarator.getDeclaratorId());
         code.append("(");
+        if(in_class){
+            code.append("self, ");
+        }
         if(func_declarator.getParameters() != null) {
             for (int i = 0; i < func_declarator.getParameters().size(); i++) {
 

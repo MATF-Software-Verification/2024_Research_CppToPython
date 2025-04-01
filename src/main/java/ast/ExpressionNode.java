@@ -83,6 +83,10 @@ public class ExpressionNode extends ASTNode {
             String formatted = value.replace("==", " == ");
             sb.append(formatted);
         }
+        if(type != null && type.equals("PostfixExpression")){
+            sb.append(value);
+
+        }
 
         if (type != null && type.equals("MultiplicativeExpression")){
             sb.append(value);

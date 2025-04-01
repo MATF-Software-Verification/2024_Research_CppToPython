@@ -29,17 +29,25 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
         if (ctx.functionDefinition() != null) {
             return visitFunctionDefinition(ctx.functionDefinition());
         }
+        else if(ctx.blockDeclaration() != null) {
+            VariableDeclarationNode variableDeclaration = new VariableDeclarationNode();
+            visitBlockDeclaration(ctx.blockDeclaration(), variableDeclaration);
+            return variableDeclaration;
+        }
 
         return null;
     }
 
-    @Override
-    public ASTNode visitFunctionDefinition(CPP14Parser.FunctionDefinitionContext ctx) {
 
-        String return_value = ctx.declSpecifierSeq().getText(); //TODO: maybe need to optimize
+    public ASTNode visitFunctionDefinition(CPP14Parser.FunctionDefinitionContext ctx, boolean from_class) {
+
+        String return_value = "";
+        if(ctx.declSpecifierSeq() != null) {
+            return_value = ctx.declSpecifierSeq().getText();
+        }
         DeclaratorNode decl = new DeclaratorNode();
         visitDeclarator(ctx.declarator(), decl);
-        FunctionNode functionNode = new FunctionNode(return_value, decl);
+        FunctionNode functionNode = new FunctionNode(return_value, decl,from_class);
 
         if (ctx.functionBody() != null) {
             visitFunctionBody(ctx.functionBody(), functionNode);
@@ -375,7 +383,50 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
         //TODO this should be refactored
         //DeclaratorTypeNode node = DeclaratorTypeNode();
         //visitDeclSpecifier(ctx.declSpecifier(0), variable);
-        variable.setType(ctx.declSpecifier(0).getText());
+        for( CPP14Parser.DeclSpecifierContext item : ctx.declSpecifier()){
+            if(item.typeSpecifier() != null) {
+
+                if(item.typeSpecifier().classSpecifier() != null) {
+                    variable.setType("class");
+                    ClassNode myClass = new ClassNode();
+                    visitClassNode(item.typeSpecifier().classSpecifier(), myClass);
+                    variable.setExpression(myClass);
+                }
+            }
+
+        }
+        if(variable.getType() == null) {
+            variable.setType(ctx.declSpecifier(0).getText());
+        }
+
+    }
+
+    public void visitClassNode(CPP14Parser.ClassSpecifierContext ctx, ClassNode mclass ){
+
+        String name = "";
+        if(ctx.classHead() != null) {
+            name = ctx.classHead().getText();
+        }
+        //String name = ctx.classHead().getText(); //TODO
+        List<ASTNode> params = new ArrayList<>();
+        mclass.setClassName(name);
+        for(CPP14Parser.MemberdeclarationContext member : ctx.memberSpecification().memberdeclaration()){
+
+            if(member.functionDefinition()!=null){
+                ASTNode func = visitFunctionDefinition(member.functionDefinition(),true);
+                if(func!=null){
+                    params.add(func);
+                }
+            }
+            else if(member.memberDeclaratorList() != null){
+                ASTNode decl = visitMemberDeclaratorList(member.memberDeclaratorList());
+                if(decl!=null){
+                    params.add(decl);
+                }
+            }
+        }
+        mclass.setMembers(params);
+
     }
 
     @Override
@@ -610,7 +661,15 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
 
         if(ctx.postfixExpression() != null){
             expression.setType("PostfixExpression");
-            expression.setValue(ctx.postfixExpression().getText());
+            if(ctx.postfixExpression().idExpression() != null && ctx.postfixExpression().idExpression().getText() != null){
+
+                String s = ctx.postfixExpression().idExpression().getText();
+                String e = ctx.postfixExpression().postfixExpression().getText();
+                expression.setValue(s+"("+e+")");
+            }
+            else{
+                expression.setValue(ctx.postfixExpression().getText());
+            }
 
             if(ctx.expressionList() != null){
                 visitPrimaryExpression(ctx.primaryExpression(), expression);
