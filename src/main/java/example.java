@@ -1,3 +1,6 @@
+import antlr.CPP14Lexer;
+import antlr.CPP14Parser;
+import ast.ASTBuilder;
 import ast.ASTNode;
 import org.antlr.v4.gui.TreeViewer;
 import org.antlr.v4.runtime.*;
@@ -11,7 +14,7 @@ public class example {
 
     public static void main(String[] args) throws IOException {
 
-        CharStream charStream = CharStreams.fromFileName("src/main/tests/class_basic.cpp");
+        CharStream charStream = CharStreams.fromFileName("src/main/tests/input/multiple_ifs.cpp");
 
         CPP14Lexer lexer = new CPP14Lexer(charStream);
         CommonTokenStream tokens = new CommonTokenStream(lexer);

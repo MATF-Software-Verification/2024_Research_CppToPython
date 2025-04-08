@@ -1,5 +1,10 @@
-package ast;
+package ast.condition;
 
+
+import ast.ASTNode;
+import ast.CaseNode;
+import ast.CompoundNode;
+import ast.ExpressionNode;
 
 import java.util.ArrayList;
 
@@ -88,17 +93,22 @@ public class SelectionNode extends ASTNode {
         StringBuilder line = new StringBuilder();
 
         if(type != null && type.equals("if") && condition != null && thenBranch != null ) {
-            line.append(this.type + " ");
-            line.append(this.condition.toPython(indent) + ":");
-            sb.append(line.toString() + '\n');
-            sb.append(this.thenBranch.toPython(indent+1));
+            line.append(this.type).append(" ");
+            line.append(this.condition.toPython(indent)).append(":");
+            sb.append(line.toString()).append('\n');
+            if(thenBranch instanceof CompoundNode) {
+                sb.append(this.thenBranch.toPython(indent+1));
+            }else{
+                sb.append(getIndentedPythonCode(indent+1,this.thenBranch.toPython(indent)));
+            }
+
             if (elseBranch != null) {
                 sb.append(getIndentedPythonCode(indent, this.elseBranch.toPython(indent)));
             }
         }else if(type != null && type.equals("elseif") && thenBranch != null && elseBranch != null && condition != null) {
             line.append("elif ");
-            line.append(this.condition.toPython(indent) + ":");
-            sb.append(line.toString() + '\n');
+            line.append(this.condition.toPython(indent)).append(":");
+            sb.append(line.toString()).append('\n');
             sb.append(this.thenBranch.toPython(indent+1));
             if (elseBranch != null) {
                 sb.append(getIndentedPythonCode(indent, this.elseBranch.toPython(indent)));
@@ -107,7 +117,7 @@ public class SelectionNode extends ASTNode {
         if(type!= null && type.equals("else") && thenBranch != null){
             line.append(this.type);
             line.append(":");
-            sb.append(line.toString() + '\n');
+            sb.append(line.toString()).append('\n');
             sb.append(this.thenBranch.toPython(indent+1));
         }
 

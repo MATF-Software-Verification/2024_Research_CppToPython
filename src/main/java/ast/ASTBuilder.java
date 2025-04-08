@@ -1,4 +1,8 @@
-import ast.*;
+package ast;
+
+import antlr.CPP14Parser;
+import antlr.CPP14ParserBaseVisitor;
+import ast.condition.SelectionNode;
 import ast.iteration.ForNode;
 import ast.iteration.ForRangeNode;
 import ast.iteration.WhileNode;
@@ -27,7 +31,7 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
     public ASTNode visitDeclaration(CPP14Parser.DeclarationContext ctx) {
 
         if (ctx.functionDefinition() != null) {
-            return visitFunctionDefinition(ctx.functionDefinition());
+            return visitFunctionDefinition(ctx.functionDefinition(), false );
         }
         else if(ctx.blockDeclaration() != null) {
             VariableDeclarationNode variableDeclaration = new VariableDeclarationNode();
@@ -691,12 +695,14 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
     }
     private void visitPrimaryExpression(CPP14Parser.PrimaryExpressionContext ctx, ExpressionNode expression) {
 
-        expression.setValue(ctx.getText());
-        if(ctx.literal() != null){
-            var l = new LiteralNode();
-            l.setValue(ctx.getText());
+        if(ctx!= null) {
+            expression.setValue(ctx.getText());
+            if (ctx.literal() != null) {
+                var l = new LiteralNode();
+                l.setValue(ctx.getText());
 
-            expression.addChild(l);
+                expression.addChild(l);
+            }
         }
     }
 }
