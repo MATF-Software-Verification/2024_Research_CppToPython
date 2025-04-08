@@ -26,12 +26,14 @@
 parser grammar CPP14Parser;
 
 options {
-    superClass = CPP14ParserBase;
+    superClass = antlr.CPP14ParserBase;
     tokenVocab = CPP14Lexer;
 }
 
 // Insert here @header for C++ parser.
-
+@header{
+package antlr;
+}
 /*Basic concepts*/
 
 translationUnit

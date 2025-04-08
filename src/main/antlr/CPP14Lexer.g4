@@ -3,7 +3,9 @@
 // $antlr-format alignColons trailing, singleLineOverrulesHangingColon true, alignLexerCommands true, alignLabels true, alignTrailers true
 
 lexer grammar CPP14Lexer;
-
+@header{
+package antlr;
+}
 IntegerLiteral:
     DecimalLiteral Integersuffix?
     | OctalLiteral Integersuffix?
