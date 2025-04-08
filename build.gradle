@@ -32,7 +32,7 @@ generateGrammarSource {
 sourceSets {
     main {
         java {
-            srcDirs = ['src/main/java', 'src/main/antlr', generatedSrcDir]
+            srcDirs = ['src/main/java', 'src/main/antlr','src/main/gen', generatedSrcDir]
         }
     }
 }

@@ -30,6 +30,9 @@ public:
             age = newAge;
         }
     }
+    void display(){
+        std::cout << "Display"<<std::endl;
+    }
 
 };
 
