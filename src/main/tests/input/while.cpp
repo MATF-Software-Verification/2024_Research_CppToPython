@@ -1,9 +1,11 @@
 #include <iostream>
+#include <vector>
 
 
 int main(){
 
-    vector<int> arr(n,0);
+    int n = 5;
+    std::vector<int> arr(n,0);
     int left = 0;
     int right = arr.size()-1;
     auto res = 0;

@@ -9,7 +9,7 @@ int factorial(int n) {
 
 int main() {
     int num = 5;
-    auto res = (factorial(num));
+    auto res = factorial(num);
     std::cout << "Factorial of " << num << " is " << res << std::endl;
     return 0;
 }
