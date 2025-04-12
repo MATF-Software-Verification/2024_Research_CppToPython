@@ -3,8 +3,10 @@ def main():
 	if x<5:
 		print("small" + '\n')
 	elif x == 10:
-print("equal" + '\n')	else:
-print("big" + '\n')
+		print("equal" + '\n')
+	else:
+		print("big" + '\n')
+
 
 
 	return 0
