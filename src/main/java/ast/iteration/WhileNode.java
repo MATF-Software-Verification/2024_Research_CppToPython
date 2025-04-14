@@ -44,7 +44,7 @@ public class WhileNode  extends  IterationNode {
         }
 
         line.append(":");
-        sb.append(getIndentedPythonCode(indent-1,line.toString()));
+        sb.append(getIndentedPythonCode(indent-2,line.toString()));
         if(body != null){
             sb.append(body.toPython(indent+1));
         }

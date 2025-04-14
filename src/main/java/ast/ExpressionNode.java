@@ -95,6 +95,22 @@ public class ExpressionNode extends ASTNode {
             sb.append(value);
         }
 
+        if (type != null && type.equals("postfixIncrement")){
+            sb.append(value).append("+=1");
+        }
+
+        if (type != null && type.equals("postfixDecrement")){
+            sb.append(value).append("-=1");
+        }
+
+        if (type != null && type.equals("prefixDecrement")){
+            sb.append(value).append("-=1");
+        }
+
+        if (type != null && type.equals("prefixIncrement")){
+            sb.append(value).append("+=1");
+        }
+
         return sb.toString();
     }
 }
