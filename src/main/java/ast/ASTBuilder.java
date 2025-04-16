@@ -142,6 +142,30 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
             functionNode.setBody(cn);
         }
 
+        if (ctx.constructorInitializer() != null) {
+            var oldName = functionNode.getFunc_declarator();
+            oldName.setDeclaratorId("__init__");
+
+            var memList = ctx.constructorInitializer().memInitializerList();
+            CompoundNode cn = new CompoundNode();
+            for (var mem : memList.memInitializer()){
+                DeclaratorNode decl = new DeclaratorNode();
+                decl.setDeclaratorId(mem.meminitializerid().getText());
+
+                ExpressionNode expr = new ExpressionNode();
+                expr.setValue(mem.expressionList().getText());
+
+                VariableDeclarationNode vd = new VariableDeclarationNode();
+                vd.setName(decl);
+                vd.setExpression(expr);
+
+                cn.add(vd);
+            }
+
+            functionNode.setBody(cn);
+
+        }
+
         return functionNode;
     }
 
@@ -407,11 +431,7 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
 
     public void visitClassNode(CPP14Parser.ClassSpecifierContext ctx, ClassNode mclass ){
 
-        String name = "";
-        if(ctx.classHead() != null) {
-            name = ctx.classHead().getText();
-        }
-        //String name = ctx.classHead().getText(); //TODO
+        String name = ctx.classHead().classHeadName().getText(); //TODO // done
         List<ASTNode> params = new ArrayList<>();
         mclass.setClassName(name);
         for(CPP14Parser.MemberdeclarationContext member : ctx.memberSpecification().memberdeclaration()){
@@ -419,6 +439,7 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
             if(member.functionDefinition()!=null){
                 ASTNode func = visitFunctionDefinition(member.functionDefinition(),true);
                 if(func!=null){
+
                     params.add(func);
                 }
             }

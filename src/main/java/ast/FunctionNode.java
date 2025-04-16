@@ -6,7 +6,7 @@ import java.util.List;
 public class FunctionNode extends ASTNode{
 
     private final String return_value;
-    private  DeclaratorNode func_declarator; // Name of function and parameters
+    private DeclaratorNode func_declarator; // Name of function and parameters
     private CompoundNode body; //TODO change to CompoundNode later.
     private boolean in_class;
 
@@ -21,7 +21,7 @@ public class FunctionNode extends ASTNode{
         body.add(node);
     }
 
-    public ASTNode getFunc_declarator() {
+    public DeclaratorNode getFunc_declarator() {
         return func_declarator;
     }
 
@@ -76,7 +76,10 @@ public class FunctionNode extends ASTNode{
         code.append(func_declarator.getDeclaratorId());
         code.append("(");
         if(in_class){
-            code.append("self, ");
+            code.append("self");
+            if (func_declarator.getParameters() != null){
+                code.append(",");
+            }
         }
         if(func_declarator.getParameters() != null) {
             for (int i = 0; i < func_declarator.getParameters().size(); i++) {
