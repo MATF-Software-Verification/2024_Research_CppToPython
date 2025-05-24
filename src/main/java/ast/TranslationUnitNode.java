@@ -22,6 +22,8 @@ public class TranslationUnitNode extends ASTNode {
         for (ASTNode declaration : declarations) {
             sb.append(declaration.toPython(indent));
         }
+
+        sb.append("if __name__ == \"__main__\":\n\tmain()");
         return sb.toString();
     }
 }

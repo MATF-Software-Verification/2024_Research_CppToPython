@@ -71,10 +71,39 @@ public class ExpressionNode extends ASTNode {
         }
 
         if (type != null && type.equals("ShiftExpression")){
-            String formatted = value.replace("std::cout<<", "").replace("std::endl", "'\\n'").trim();
-            formatted = formatted.replace("<<", " + ").trim();
+            String formatted = value.replace("std::cout<<", "").trim();
 
-            String pyStatement = "print(" + formatted + ")";
+            // Check for std::endl and remove it
+            boolean endsWithNewline = formatted.contains("std::endl");
+            formatted = formatted.replace("std::endl", "").trim();
+            formatted = formatted.replace("<<", ";").trim();
+            String[] parts = formatted.split(";");
+
+            StringBuilder content = new StringBuilder();
+            boolean needsFString = false;
+
+            for (String part : parts) {
+                part = part.trim();
+
+                if ((part.startsWith("\"") && part.endsWith("\"")) ||
+                        (part.startsWith("'") && part.endsWith("'"))) {
+
+                    // Remove quotes and append directly
+                    String unquoted = part.substring(1, part.length() - 1)
+                            .replace("\"", "\\\"")
+                            .replace("\\n", "\n");
+                    content.append(unquoted);
+                } else if (!part.isEmpty()) {
+                    // Otherwise treat as a variable/expression
+                    needsFString = true;
+                    content.append("{").append(part).append("}");
+                }
+            }
+
+            String finalContent = content.toString();
+            String pyStatement = needsFString
+                    ? "print(f\"" + finalContent + "\")"
+                    : "print(\"" + finalContent + "\")";
             sb.append(pyStatement);
 
         }

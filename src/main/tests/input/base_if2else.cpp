@@ -2,7 +2,7 @@
 #include <vector>
 
 
-int main(int argc, char** argv){
+int main(){
 
     int x = 0;
     int y = 5;

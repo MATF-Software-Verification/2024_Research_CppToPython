@@ -31,7 +31,7 @@ public:
         }
     }
     void display(){
-        std::cout << "Display"<<std::endl;
+        std::cout << "Name: " << name << ", age: " << age <<std::endl;
     }
 
 };
@@ -43,8 +43,8 @@ int main() {
     Person p2("Alice", 30);
     p2.display();
 
-   // p2.setName("Bob"); //TODO these not working
-   // p2.setAge(35); //TODO these one not working
+    p2.setName("Bob"); //TODO these not working
+    p2.setAge(35); //TODO these one not working
     p2.display();
 
     return 0;
