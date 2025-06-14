@@ -1,5 +1,7 @@
 package ast;
 
+import utils.ClassStorage;
+
 /*
  can be used as PARAMETER NODE for function parameters w/o expression field.
  */
@@ -8,6 +10,7 @@ public class VariableDeclarationNode extends ASTNode {
     private String type;
     private DeclaratorNode name;
     private ASTNode expression;
+    private Boolean classMember = Boolean.FALSE;
 
     public VariableDeclarationNode(String type, DeclaratorNode name, ASTNode expression) {
         this.name = name;
@@ -25,6 +28,13 @@ public class VariableDeclarationNode extends ASTNode {
 
     public String getType() {
         return type;
+    }
+
+    public Boolean getClassMember() {
+        return classMember;
+    }
+    public void setClassMember() {
+        this.classMember = Boolean.TRUE;
     }
 
     public void setType(String type) {
@@ -87,6 +97,14 @@ public class VariableDeclarationNode extends ASTNode {
             sb.append(line);
             sb.append(expression.toPython(indent));
 
+        }
+        else if (type != null && ClassStorage.getInstance().hasClass(type)) {
+
+            line.append(getNameOut());
+            line.append("=");
+            line.append(getType()).append("(").append(")");
+            sb.append(line);
+            //TODO: this should be fixed crucial;
         }
         else {
             if (expression != null) {

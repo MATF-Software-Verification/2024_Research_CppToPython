@@ -1,5 +1,7 @@
 package ast;
 
+import utils.ClassStorage;
+
 import java.util.List;
 
 public class ClassNode extends ASTNode {
@@ -16,6 +18,10 @@ public class ClassNode extends ASTNode {
     }
 
     public void setMembers(List<ASTNode> members) {
+
+        for(ASTNode member : members) {
+            ClassStorage.getInstance().addFunction(className,((FunctionNode)member).getName());
+        }
         this.members = members;
     }
 
@@ -24,6 +30,7 @@ public class ClassNode extends ASTNode {
     }
 
     public void setClassName(String className) {
+        ClassStorage.getInstance().addClass(className);
         this.className = className;
     }
 
