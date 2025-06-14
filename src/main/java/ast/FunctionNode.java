@@ -17,6 +17,9 @@ public class FunctionNode extends ASTNode{
         this.in_class = in_class;
     }
 
+    public String getName(){
+        return func_declarator.getDeclaratorId();
+    }
     public void addBodyNode(ASTNode node){
         body.add(node);
     }

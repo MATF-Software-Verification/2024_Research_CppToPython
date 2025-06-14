@@ -150,7 +150,7 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
             CompoundNode cn = new CompoundNode();
             for (var mem : memList.memInitializer()){
                 DeclaratorNode decl = new DeclaratorNode();
-                decl.setDeclaratorId(mem.meminitializerid().getText());
+                decl.setDeclaratorId("self."+mem.meminitializerid().getText());
 
                 ExpressionNode expr = new ExpressionNode();
                 expr.setValue(mem.expressionList().getText());
