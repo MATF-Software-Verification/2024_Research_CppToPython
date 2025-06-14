@@ -383,6 +383,9 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
         if(ctx.braceOrEqualInitializer() != null) {
             return visitInitializerClause(ctx.braceOrEqualInitializer().initializerClause());
         }
+        if (ctx.expressionList() != null) {
+            // expressionList basically has only `initializerList`
+        }
         return null;
     }
 
@@ -406,6 +409,12 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
         return exp;
     }
 
+    public void visitTrailingTypeSpecifier(CPP14Parser.TrailingTypeSpecifierContext ctx, VariableDeclarationNode variable) {
+        if (ctx.simpleTypeSpecifier() != null) {
+
+        }
+    }
+
     private void visitDeclSpecifierSeq(CPP14Parser.DeclSpecifierSeqContext ctx, VariableDeclarationNode variable) {
 
         //TODO this should be refactored
@@ -419,6 +428,11 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
                     ClassNode myClass = new ClassNode();
                     visitClassNode(item.typeSpecifier().classSpecifier(), myClass);
                     variable.setExpression(myClass);
+                }
+
+                if(item.typeSpecifier().trailingTypeSpecifier() != null) {
+                    // setting the variable type here.
+                    visitTrailingTypeSpecifier(item.typeSpecifier().trailingTypeSpecifier(), variable);
                 }
             }
 
@@ -519,6 +533,7 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
             List<T> list,
             String type,
             String value,
+            String operator,
             ExpressionNode expression,
             BiConsumer<T, ExpressionNode> visitor
     ){
@@ -528,6 +543,7 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
         if (list.size() > 1){
             expression.setType(type);
             expression.setValue(value);
+            expression.setOperator(operator);
             for(T item : list){
                 ExpressionNode tmp = new ExpressionNode();
                 visitor.accept(item, tmp);
@@ -542,50 +558,60 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
     private void visitLogicalOrExpression(CPP14Parser.LogicalOrExpressionContext ctx, ExpressionNode expression) {
 
         String value = ctx.getText();
+        String operator = !ctx.OrOr().isEmpty() ? ctx.OrOr().getFirst().getText() : null;
         visitExpression_template(
                 ctx.logicalAndExpression(),
                 "LogicalOrExpression",
                 value,
+                operator,
                 expression,
                 this::visitLogicalAndExpression
         );
     }
     private void visitLogicalAndExpression(CPP14Parser.LogicalAndExpressionContext ctx, ExpressionNode expression) {
         String value = ctx.getText();
+        String operator = !ctx.AndAnd().isEmpty() ? ctx.AndAnd().getFirst().getText() : null;
         visitExpression_template(
                 ctx.inclusiveOrExpression(),
                 "LogicalAndExpression",
                 value,
+                operator,
                 expression,
                 this::visitInclusiveOrExpression
         );
     }
     private void visitInclusiveOrExpression(CPP14Parser.InclusiveOrExpressionContext ctx, ExpressionNode expression) {
         String value = ctx.getText();
+        String operator = !ctx.Or().isEmpty() ? ctx.Or().getFirst().getText() : null;
         visitExpression_template(
                 ctx.exclusiveOrExpression(),
                 "InclusiveOrExpression",
                 value,
+                operator,
                 expression,
                 this::visitExclusiveOrExpression
         );
     }
     private void visitExclusiveOrExpression(CPP14Parser.ExclusiveOrExpressionContext ctx, ExpressionNode expression) {
         String value = ctx.getText();
+        String operator = !ctx.Caret().isEmpty() ? ctx.Caret().getFirst().getText() : null;
         visitExpression_template(
                 ctx.andExpression(),
                 "ExclusiveOrExpression",
                 value,
+                operator,
                 expression,
                 this::visitAndExpression
         );
     }
     private void visitAndExpression(CPP14Parser.AndExpressionContext ctx, ExpressionNode expression) {
         String value = ctx.getText();
+        String operator = !ctx.And().isEmpty() ? ctx.And().getFirst().getText() : null;
         visitExpression_template(
                 ctx.equalityExpression(),
                 "AndExpression",
                 value,
+                operator,
                 expression,
                 this::visitEqualityExpression
         );
@@ -593,10 +619,17 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
 
     private void visitEqualityExpression(CPP14Parser.EqualityExpressionContext ctx, ExpressionNode expression) {
         String value = ctx.getText();
+        String operator = null;
+        if (!ctx.Equal().isEmpty())
+            operator = ctx.Equal().getFirst().getText();
+        else if (!ctx.NotEqual().isEmpty())
+            operator = ctx.NotEqual().getFirst().getText();
+
         visitExpression_template(
                 ctx.relationalExpression(),
                 "EqualityExpression",
                 value,
+                operator,
                 expression,
                 this::visitRelationalExpression
         );
@@ -604,20 +637,32 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
     private void visitRelationalExpression(CPP14Parser.RelationalExpressionContext ctx, ExpressionNode expression) {
 
         String value = ctx.getText();
+        String operator = null;
+        if (!ctx.Less().isEmpty())
+            operator = ctx.Less().getFirst().getText();
+        else if (!ctx.LessEqual().isEmpty())
+            operator = ctx.LessEqual().getFirst().getText();
+        else if (!ctx.Greater().isEmpty())
+            operator = ctx.Greater().getFirst().getText();
+        else if (!ctx.GreaterEqual().isEmpty())
+            operator = ctx.GreaterEqual().getFirst().getText();
         visitExpression_template(
                 ctx.shiftExpression(),
                 "RelationalExpression",
                 value,
+                operator,
                 expression,
                 this::visitShiftExpression
         );
     }
     private void visitShiftExpression(CPP14Parser.ShiftExpressionContext ctx, ExpressionNode expression) {
         String value = ctx.getText();
+        String operator = !ctx.shiftOperator().isEmpty() ? ctx.shiftOperator().getFirst().getText() : null;
         visitExpression_template(
                 ctx.additiveExpression(),
                 "ShiftExpression",
                 value,
+                operator,
                 expression,
                 this::visitAdditiveExpression
         );
@@ -625,10 +670,16 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
 
     private void visitAdditiveExpression(CPP14Parser.AdditiveExpressionContext ctx, ExpressionNode expression) {
         String value = ctx.getText();
+        String operator = null;
+        if (!ctx.Minus().isEmpty())
+            operator = ctx.Minus().getFirst().getText();
+        else if (!ctx.Plus().isEmpty())
+            operator = ctx.Plus().getFirst().getText();
         visitExpression_template(
                 ctx.multiplicativeExpression(),
                 "AdditiveExpression",
                 value,
+                operator,
                 expression,
                 this::visitMultiplicativeExpression
         );
@@ -637,10 +688,18 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
     private void visitMultiplicativeExpression(CPP14Parser.MultiplicativeExpressionContext ctx, ExpressionNode expression) {
 
         String value = ctx.getText();
+        String operator = null;
+        if (!ctx.Div().isEmpty())
+            operator = ctx.Div().getFirst().getText();
+        else if (!ctx.Mod().isEmpty())
+            operator = ctx.Mod().getFirst().getText();
+        else if (!ctx.Star().isEmpty())
+            operator = ctx.Star().getFirst().getText();
         visitExpression_template(
                 ctx.pointerMemberExpression(),
                 "MultiplicativeExpression",
                 value,
+                operator,
                 expression,
                 this::visitPointerMemberExpression
         );
@@ -648,10 +707,16 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
     private void visitPointerMemberExpression(CPP14Parser.PointerMemberExpressionContext ctx, ExpressionNode expression) {
 
         String value = ctx.getText();
+        String operator = null;
+        if (!ctx.DotStar().isEmpty())
+            operator = ctx.DotStar().getFirst().getText();
+        else if (!ctx.ArrowStar().isEmpty())
+            operator = ctx.ArrowStar().getFirst().getText();
         visitExpression_template(
                 ctx.castExpression(),
                 "PointerMemberExpression",
                 value,
+                operator,
                 expression,
                 this::visitCastExpression
         );
@@ -686,7 +751,7 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
 
         if(ctx.postfixExpression() != null){
             expression.setType("PostfixExpression");
-            if(ctx.postfixExpression().idExpression() != null && ctx.postfixExpression().idExpression().getText() != null){
+            if(ctx.postfixExpression().Dot() != null){
 
                 String s = ctx.postfixExpression().idExpression().getText();
                 String e = ctx.postfixExpression().postfixExpression().getText();
