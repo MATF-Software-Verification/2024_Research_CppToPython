@@ -2,6 +2,7 @@ package ast;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class ExpressionNode extends ASTNode {
 
@@ -49,6 +50,47 @@ public class ExpressionNode extends ASTNode {
 
     @Override
     public String toPython(int indent) {
+        StringBuilder sb = new StringBuilder();
+
+        if (this.children.isEmpty() || this.children.size() == 1) {
+            sb.append(this.toPythonHelp(indent));
+            return sb.toString();
+        }
+
+        if (this.type != null && this.type.equals("ShiftExpression")) {
+            sb.append(this.toPythonHelp(indent));
+            return sb.toString();
+        }
+        List<String> childStrings = children.stream()
+                .map(node -> {
+                    if (node instanceof ExpressionNode) {
+                        return ((ExpressionNode) node).toPythonHelp(indent);
+                    } else {
+                        return node.toPython(indent);
+                    }
+                })
+                .collect(Collectors.toList());
+
+        if (this.operator != null) {
+            if (this.operator.equals("&&"))
+                this.operator = this.operator.replace("&&", " and ");
+
+            else if (this.operator.equals("||"))
+                this.operator = this.operator.replace("||", " or ");
+
+            else if (this.operator.equals("/"))
+                this.operator = this.operator.replace("/", " // ");
+            sb.append(String.join(this.operator, childStrings));
+
+        }
+        else if (!childStrings.isEmpty()) {
+            sb.append(childStrings.get(0));
+        }
+
+        return sb.toString();
+    }
+
+    public String toPythonHelp(int indent) {
 
 
         StringBuilder sb = new StringBuilder();
@@ -113,8 +155,9 @@ public class ExpressionNode extends ASTNode {
             sb.append(formatted);
         }
         if(type != null && type.equals("PostfixExpression")){
+            if (value.contains("size"))
+                value = value.replace("size", "len");
             sb.append(value);
-
         }
 
         if (type != null && type.equals("MultiplicativeExpression")){
@@ -125,11 +168,13 @@ public class ExpressionNode extends ASTNode {
         }
 
         if (type != null && type.equals("postfixIncrement")){
-            sb.append(value).append("+=1");
+            value = value.replace("++", "+=1");
+            sb.append(value);
         }
 
         if (type != null && type.equals("postfixDecrement")){
-            sb.append(value).append("-=1");
+            value = value.replace("--", "-=1");
+            sb.append(value);
         }
 
         if (type != null && type.equals("prefixDecrement")){
@@ -142,4 +187,6 @@ public class ExpressionNode extends ASTNode {
 
         return sb.toString();
     }
+
+
 }

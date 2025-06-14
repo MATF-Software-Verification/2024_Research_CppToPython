@@ -758,7 +758,7 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
                 expression.setValue(s+"("+e+")");
             }
             else{
-                expression.setValue(ctx.postfixExpression().getText());
+                expression.setValue(ctx.getText());
             }
 
             if(ctx.expressionList() != null){

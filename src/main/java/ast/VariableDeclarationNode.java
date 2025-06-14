@@ -106,11 +106,20 @@ public class VariableDeclarationNode extends ASTNode {
             sb.append(line);
             //TODO: this should be fixed crucial;
         }
+
+        else if (type != null && type.contains("vector")){
+            line.append(getNameOut());
+            line.append(" = ");
+            line.append("[");
+            line.append(expression.toPython(indent));
+            line.append("]");
+            sb.append(line);
+        }
         else {
             if (expression != null) {
                 line.append(getNameOut());
                 line.append(" = ");
-                line.append(getExpressionOut());
+                line.append(expression.toPython(indent));
             }
             sb.append(line);
         }

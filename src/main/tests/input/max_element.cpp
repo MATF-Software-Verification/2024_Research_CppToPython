@@ -1,6 +1,7 @@
 #include <iostream>
+#include <vector>
 
-int findMax(int arr[], int n) {
+int findMax(std::vector<int>& arr, int n) {
     int maxVal = arr[0];
     for (int i = 1; i < n; i++) {
         if (arr[i] > maxVal)
@@ -10,8 +11,8 @@ int findMax(int arr[], int n) {
 }
 
 int main() {
-    int arr[] = {10, 25, 30, 42, 15};
-    int n = sizeof(arr) / sizeof(arr[0]);
-    std::cout << "Maximum element is " << (findMax(arr, n)) << std::endl;
+    std::vector<int> arr = {10, 25, 30, 42, 15};
+    int n = arr.size();
+    std::cout << "Maximum element is " << findMax(arr, n) << std::endl;
     return 0;
 }

@@ -5,7 +5,7 @@
 int main(){
 
     int n = 5;
-    std::vector<int> arr(n,0);
+    std::vector<int> arr = {1,2,3,4,5};
     int left = 0;
     int right = arr.size()-1;
     auto res = 0;
