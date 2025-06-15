@@ -6,8 +6,10 @@ import ast.condition.SelectionNode;
 import ast.iteration.ForNode;
 import ast.iteration.ForRangeNode;
 import ast.iteration.WhileNode;
+import utils.ClassStorage;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.BiConsumer;
 
@@ -31,7 +33,7 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
     public ASTNode visitDeclaration(CPP14Parser.DeclarationContext ctx) {
 
         if (ctx.functionDefinition() != null) {
-            return visitFunctionDefinition(ctx.functionDefinition(), false );
+            return visitFunctionDefinition(ctx.functionDefinition(), false ,"");
         }
         else if(ctx.blockDeclaration() != null) {
             VariableDeclarationNode variableDeclaration = new VariableDeclarationNode();
@@ -43,7 +45,7 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
     }
 
 
-    public ASTNode visitFunctionDefinition(CPP14Parser.FunctionDefinitionContext ctx, boolean from_class) {
+    public ASTNode visitFunctionDefinition(CPP14Parser.FunctionDefinitionContext ctx, boolean from_class, String class_name) {
 
         String return_value = "";
         if(ctx.declSpecifierSeq() != null) {
@@ -51,6 +53,8 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
         }
         DeclaratorNode decl = new DeclaratorNode();
         visitDeclarator(ctx.declarator(), decl);
+
+        ClassStorage.getInstance().addFunction(class_name, decl.getDeclaratorId());
         FunctionNode functionNode = new FunctionNode(return_value, decl,from_class);
 
         if (ctx.functionBody() != null) {
@@ -371,7 +375,10 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
                 DeclaratorNode node = new DeclaratorNode();
                 visitDeclarator(c.declarator(), node);
                 variable.setName(node);
-
+                List<String> typeList = Arrays.asList("int","string","vector");
+                if(!typeList.contains(variable.getType())){
+                    ClassStorage.getInstance().addVariable(variable.getType(),node.getDeclaratorId());
+                }
                 if(c.initializer() != null) {
                     var expression = visitInitializer(c.initializer());
                     variable.setExpression(expression);
@@ -445,13 +452,13 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
 
     public void visitClassNode(CPP14Parser.ClassSpecifierContext ctx, ClassNode mclass ){
 
-        String name = ctx.classHead().classHeadName().getText(); //TODO // done
+        String name = ctx.classHead().classHeadName().getText();
         List<ASTNode> params = new ArrayList<>();
         mclass.setClassName(name);
         for(CPP14Parser.MemberdeclarationContext member : ctx.memberSpecification().memberdeclaration()){
 
             if(member.functionDefinition()!=null){
-                ASTNode func = visitFunctionDefinition(member.functionDefinition(),true);
+                ASTNode func = visitFunctionDefinition(member.functionDefinition(),true, name);
                 if(func!=null){
 
                     params.add(func);
@@ -751,11 +758,22 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
 
         if(ctx.postfixExpression() != null){
             expression.setType("PostfixExpression");
+
+            var valuee = "";
+            if(ctx.expressionList() != null){
+                 valuee = ctx.expressionList().getText();
+            }
+
             if(ctx.postfixExpression().Dot() != null){
 
-                String s = ctx.postfixExpression().idExpression().getText();
-                String e = ctx.postfixExpression().postfixExpression().getText();
-                expression.setValue(s+"("+e+")");
+                String idExpression = ctx.postfixExpression().idExpression().getText();
+                String expression_text = ctx.postfixExpression().postfixExpression().getText();
+                String class_e = ClassStorage.getInstance().getClass(expression_text);
+                if(ClassStorage.getInstance().hasFunction(class_e,idExpression)){
+                    expression.setValue(expression_text+"."+idExpression+"("+valuee+")");
+                }else {
+                    expression.setValue(idExpression + "(" + expression_text + ")");
+                }
             }
             else{
                 expression.setValue(ctx.getText());

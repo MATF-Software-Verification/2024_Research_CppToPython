@@ -106,7 +106,6 @@ public class VariableDeclarationNode extends ASTNode {
             sb.append(line);
             //TODO: this should be fixed crucial;
         }
-
         else if (type != null && type.contains("vector")){
             line.append(getNameOut());
             line.append(" = ");

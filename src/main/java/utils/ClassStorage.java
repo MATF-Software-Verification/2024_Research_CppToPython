@@ -10,6 +10,7 @@ public class ClassStorage {
 
     private static final ClassStorage INSTANCE = new ClassStorage();
     private final Map<String, Set<String>> classFunctionMap = new HashMap<>();
+    private final Map<String,Set<String>> classVariablesMap = new HashMap<>();
 
     private ClassStorage() {}
 
@@ -20,6 +21,9 @@ public class ClassStorage {
     public void addClass(String className) {
         classFunctionMap.putIfAbsent(className, new HashSet<>());
     }
+    public void addVariable(String className, String variableName){
+        classVariablesMap.computeIfAbsent(className,k->new HashSet<>()).add(variableName);
+    }
 
     public void addFunction(String className, String functionName) {
         classFunctionMap.computeIfAbsent(className, k -> new HashSet<>()).add(functionName);
@@ -27,6 +31,17 @@ public class ClassStorage {
 
     public boolean hasClass(String className) {
         return classFunctionMap.containsKey(className);
+    }
+    public boolean hasVariable(String className, String variableName){
+        return classVariablesMap.containsKey(className) && classVariablesMap.get(className).contains(variableName);
+    }
+    public String getClass(String variableName) {
+        for (Map.Entry<String, Set<String>> entry : classVariablesMap.entrySet()) {
+            if (entry.getValue().contains(variableName)) {
+                return entry.getKey();
+            }
+        }
+        return null; // or Optional.empty(), or throw exception if preferred
     }
 
     public boolean hasFunction(String className, String functionName) {

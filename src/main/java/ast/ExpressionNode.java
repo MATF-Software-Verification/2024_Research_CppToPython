@@ -1,5 +1,7 @@
 package ast;
 
+import utils.ClassStorage;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -98,21 +100,18 @@ public class ExpressionNode extends ASTNode {
         if(type != null && type.equals("AdditiveExpression")){
             sb.append(value);
         }
-        if(type != null && type.equals("RelationalExpression")){
+        else if(type != null && type.equals("RelationalExpression")){
             sb.append(value);
         }
-
-        if (type != null && type.equals("LogicalAndExpression")){
+        else if (type != null && type.equals("LogicalAndExpression")){
             String formatted = value.replace("&&", " and ");
             sb.append(formatted);
         }
-
-        if (type != null && type.equals("LogicalOrExpression")){
+        else if (type != null && type.equals("LogicalOrExpression")){
             String formatted = value.replace("||", " or ");
             sb.append(formatted);
         }
-
-        if (type != null && type.equals("ShiftExpression")){
+        else if (type != null && type.equals("ShiftExpression")){
             String formatted = value.replace("std::cout<<", "").trim();
 
             // Check for std::endl and remove it
@@ -149,40 +148,38 @@ public class ExpressionNode extends ASTNode {
             sb.append(pyStatement);
 
         }
-
-        if (type != null && type.equals("EqualityExpression")){
+        else if (type != null && type.equals("EqualityExpression")){
             String formatted = value.replace("==", " == ");
             sb.append(formatted);
         }
-        if(type != null && type.equals("PostfixExpression")){
+        else if(type != null && type.equals("PostfixExpression")){
+            System.out.println(value);
             if (value.contains("size"))
                 value = value.replace("size", "len");
             sb.append(value);
         }
-
-        if (type != null && type.equals("MultiplicativeExpression")){
+        else if (type != null && type.equals("MultiplicativeExpression")){
             sb.append(value);
         }
-        if (type != null && type.equals("PointerMemberExpression")){
+        else if (type != null && type.equals("PointerMemberExpression")){
             sb.append(value);
         }
-
-        if (type != null && type.equals("postfixIncrement")){
+        else if (type != null && type.equals("postfixIncrement")){
             value = value.replace("++", "+=1");
             sb.append(value);
         }
-
-        if (type != null && type.equals("postfixDecrement")){
+        else if (type != null && type.equals("postfixDecrement")){
             value = value.replace("--", "-=1");
             sb.append(value);
         }
-
-        if (type != null && type.equals("prefixDecrement")){
+        else if (type != null && type.equals("prefixDecrement")){
             sb.append(value).append("-=1");
         }
-
-        if (type != null && type.equals("prefixIncrement")){
+        else if (type != null && type.equals("prefixIncrement")){
             sb.append(value).append("+=1");
+        }
+        else{
+            sb.append(value);
         }
 
         return sb.toString();

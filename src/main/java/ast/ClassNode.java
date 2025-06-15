@@ -22,6 +22,7 @@ public class ClassNode extends ASTNode {
         for(ASTNode member : members) {
             ClassStorage.getInstance().addFunction(className,((FunctionNode)member).getName());
         }
+        System.out.println(ClassStorage.getInstance().getFunctions(className));
         this.members = members;
     }
 
