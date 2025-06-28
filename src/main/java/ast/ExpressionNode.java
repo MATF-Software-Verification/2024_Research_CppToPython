@@ -1,6 +1,8 @@
 package ast;
 
 import utils.ClassStorage;
+import utils.ConvertFunctionCall;
+import utils.ConvertOperator;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,40 +52,115 @@ public class ExpressionNode extends ASTNode {
         return sb.toString();
     }
 
+    private List<String> getChildrenStrings(List<ASTNode> childrens, int indent){
+        List<String> childStrings = children.stream()
+                .map(node -> {
+                    if (node instanceof ExpressionNode) {
+                        return ((ExpressionNode) node).toPython(indent);
+                    } else {
+                        return node.toPython(indent);
+                    }
+                })
+                .collect(Collectors.toList());
+        return childStrings;
+    }
+
     @Override
     public String toPython(int indent) {
         StringBuilder sb = new StringBuilder();
+        if (children.isEmpty()) {
+            return sb.append(value).toString();
+        }
+        if (this.children.size() == 1) {
+            if(type != null){
+                if(type.equals("NormalFunction")){
+                    sb.append(value);
+                    return sb.toString();
+                }
+                if(type.equals("PointerMemberExpression")){
+                    String formated = ConvertFunctionCall.convert(value);
+                    sb.append(formated).append(" ");
+                    return sb.toString();
+                }
+                if(this.type.equals("PostfixExpression")){
+                    sb.append(children.get(0).toPython(indent));
+                    return sb.toString();
+                }
+                if(type.equals("LIST_IDX")){
+                    sb.append(value);
+                    return sb.toString();
+                }
+            }
+            String childString = this.children.get(0).toPython(indent);
+            sb.append(childString);
 
-        if (this.children.isEmpty() || this.children.size() == 1) {
-            sb.append(this.toPythonHelp(indent));
             return sb.toString();
         }
+        if(type != null){
+            if(type.equals("AdditiveExpression")){
+                List<String> childStrings = getChildrenStrings(children, indent);
+                if (this.operator != null && !childStrings.isEmpty()) {
+                    String operatorString = ConvertOperator.convert(this.operator);
+                    System.out.println("+=====[ "+this.operator + " ]====== "+operatorString);
+                    sb.append(String.join(operatorString, childStrings));
+                }
+                return sb.toString();
+            }
+            if(type.equals("ShiftExpression")){
+                List<String> childStrings = getChildrenStrings(children, indent);
+                System.out.println(childStrings);
+                if(!childStrings.isEmpty() && ConvertFunctionCall.hasValue(childStrings.get(0).toString().trim())){
+                    sb.append(childStrings.get(0));
+                    sb.append("(");
+                    sb.append(String.join(",", childStrings.subList(1, childStrings.size()-1)));
+                    sb.append(")");
+                }
+                return sb.toString();
 
-        if (this.type != null && this.type.equals("ShiftExpression")) {
-            sb.append(this.toPythonHelp(indent));
+            }
+            if(type.equals("RelationalExpression")){
+                List<String> childStrings = getChildrenStrings(children, indent);
+                if (this.operator != null && !childStrings.isEmpty()) {
+                    String operatorString = ConvertOperator.convert(this.operator);
+                    System.out.println("+=====[ "+this.operator + " ]====== "+operatorString);
+                    sb.append(String.join(operatorString, childStrings));
+                }
+                return sb.toString();
+            }
+            if(this.type.equals("PostfixExpression")){
+
+                if(children.size()> 1){
+                    sb.append(value);
+                }
+                return sb.toString();
+            }
+            if(type.equals("InitializerList")){
+                List<String> childStrings = getChildrenStrings(children, indent);
+                sb.append(String.join(",", childStrings));
+                return sb.toString();
+            }
+        }
+
+        if (this.type != null && this.type.equals("NormalFunction")){
+            System.out.println("THIS IS NORMAL:" + this.getChildren().toString());
+            sb.append(this.getValue());
             return sb.toString();
         }
         List<String> childStrings = children.stream()
                 .map(node -> {
                     if (node instanceof ExpressionNode) {
-                        return ((ExpressionNode) node).toPythonHelp(indent);
+                        return ((ExpressionNode) node).toPython(indent);
                     } else {
                         return node.toPython(indent);
                     }
                 })
                 .collect(Collectors.toList());
 
-        if (this.operator != null) {
-            if (this.operator.equals("&&"))
-                this.operator = this.operator.replace("&&", " and ");
 
-            else if (this.operator.equals("||"))
-                this.operator = this.operator.replace("||", " or ");
-
-            else if (this.operator.equals("/"))
-                this.operator = this.operator.replace("/", " // ");
-            sb.append(String.join(this.operator, childStrings));
-
+        if (this.operator != null && !childStrings.isEmpty()) {
+            String operatorString = ConvertOperator.convert(this.operator);
+            System.out.println("+=====[ "+this.operator + " ]====== "+operatorString);
+            sb.append(String.join(operatorString, childStrings));
         }
         else if (!childStrings.isEmpty()) {
             sb.append(childStrings.get(0));
@@ -92,98 +169,6 @@ public class ExpressionNode extends ASTNode {
         return sb.toString();
     }
 
-    public String toPythonHelp(int indent) {
-
-
-        StringBuilder sb = new StringBuilder();
-
-        if(type != null && type.equals("AdditiveExpression")){
-            sb.append(value);
-        }
-        else if(type != null && type.equals("RelationalExpression")){
-            sb.append(value);
-        }
-        else if (type != null && type.equals("LogicalAndExpression")){
-            String formatted = value.replace("&&", " and ");
-            sb.append(formatted);
-        }
-        else if (type != null && type.equals("LogicalOrExpression")){
-            String formatted = value.replace("||", " or ");
-            sb.append(formatted);
-        }
-        else if (type != null && type.equals("ShiftExpression")){
-            String formatted = value.replace("std::cout<<", "").trim();
-
-            // Check for std::endl and remove it
-            boolean endsWithNewline = formatted.contains("std::endl");
-            formatted = formatted.replace("std::endl", "").trim();
-            formatted = formatted.replace("<<", ";").trim();
-            String[] parts = formatted.split(";");
-
-            StringBuilder content = new StringBuilder();
-            boolean needsFString = false;
-
-            for (String part : parts) {
-                part = part.trim();
-
-                if ((part.startsWith("\"") && part.endsWith("\"")) ||
-                        (part.startsWith("'") && part.endsWith("'"))) {
-
-                    // Remove quotes and append directly
-                    String unquoted = part.substring(1, part.length() - 1)
-                            .replace("\"", "\\\"")
-                            .replace("\\n", "\n");
-                    content.append(unquoted);
-                } else if (!part.isEmpty()) {
-                    // Otherwise treat as a variable/expression
-                    needsFString = true;
-                    content.append("{").append(part).append("}");
-                }
-            }
-
-            String finalContent = content.toString();
-            String pyStatement = needsFString
-                    ? "print(f\"" + finalContent + "\")"
-                    : "print(\"" + finalContent + "\")";
-            sb.append(pyStatement);
-
-        }
-        else if (type != null && type.equals("EqualityExpression")){
-            String formatted = value.replace("==", " == ");
-            sb.append(formatted);
-        }
-        else if(type != null && type.equals("PostfixExpression")){
-            System.out.println(value);
-            if (value.contains("size"))
-                value = value.replace("size", "len");
-            sb.append(value);
-        }
-        else if (type != null && type.equals("MultiplicativeExpression")){
-            sb.append(value);
-        }
-        else if (type != null && type.equals("PointerMemberExpression")){
-            sb.append(value);
-        }
-        else if (type != null && type.equals("postfixIncrement")){
-            value = value.replace("++", "+=1");
-            sb.append(value);
-        }
-        else if (type != null && type.equals("postfixDecrement")){
-            value = value.replace("--", "-=1");
-            sb.append(value);
-        }
-        else if (type != null && type.equals("prefixDecrement")){
-            sb.append(value).append("-=1");
-        }
-        else if (type != null && type.equals("prefixIncrement")){
-            sb.append(value).append("+=1");
-        }
-        else{
-            sb.append(value);
-        }
-
-        return sb.toString();
-    }
 
 
 }

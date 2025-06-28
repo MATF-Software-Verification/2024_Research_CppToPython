@@ -101,8 +101,11 @@ public class VariableDeclarationNode extends ASTNode {
         else if (type != null && ClassStorage.getInstance().hasClass(type)) {
 
             line.append(getNameOut());
-            line.append("=");
-            line.append(getType()).append("(").append(")");
+            line.append("=").append(getType()).append("(");
+            if(expression != null) {
+                line.append(((ExpressionNode)expression).toPython(0));
+            }
+            line.append(")");
             sb.append(line);
             //TODO: this should be fixed crucial;
         }
