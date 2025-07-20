@@ -1,6 +1,7 @@
 package ast;
 
 import utils.ClassStorage;
+import utils.FunctionStorage;
 
 /*
  can be used as PARAMETER NODE for function parameters w/o expression field.
@@ -89,7 +90,6 @@ public class VariableDeclarationNode extends ASTNode {
         return sb.toString();
     }
     public String toPython(int indent) {
-
         StringBuilder sb = new StringBuilder();
         StringBuilder line = new StringBuilder();
 
@@ -97,6 +97,14 @@ public class VariableDeclarationNode extends ASTNode {
             sb.append(line);
             sb.append(expression.toPython(indent));
 
+        }
+        else if(name != null && FunctionStorage.getInstance().hasFunction(name.getDeclaratorId()) && !ClassStorage.getInstance().hasClass(name.getDeclaratorId())) {
+            line.append(name.getDeclaratorId()).append("(");
+            if(expression != null) {
+                line.append(expression.toPython(0));
+            }
+            line.append(")");
+            sb.append(line);
         }
         else if (type != null && ClassStorage.getInstance().hasClass(type)) {
 

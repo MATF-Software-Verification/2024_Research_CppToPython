@@ -9,6 +9,7 @@ import ast.iteration.WhileNode;
 import utils.ClassStorage;
 import utils.ConvertFunctionCall;
 import utils.ConvertOperator;
+import utils.FunctionStorage;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -42,7 +43,8 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
             visitBlockDeclaration(ctx.blockDeclaration(), variableDeclaration);
             return variableDeclaration;
         }
-
+        // TODO: Missing templateDeclaration, explicitInstantiation, explicitSpecialization
+        // TODO: LinkageSpecification, namespaceDefinition, emptyDeclaration_, attributeDeclaration
         return null;
     }
 
@@ -56,7 +58,10 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
         DeclaratorNode decl = new DeclaratorNode();
         visitDeclarator(ctx.declarator(), decl);
 
-        ClassStorage.getInstance().addFunction(class_name, decl.getDeclaratorId());
+        if(from_class) {
+            ClassStorage.getInstance().addFunction(class_name, decl.getDeclaratorId());
+        }
+        FunctionStorage.getInstance().addFunction(decl.getDeclaratorId());
         FunctionNode functionNode = new FunctionNode(return_value, decl, from_class);
 
         if (ctx.functionBody() != null) {
@@ -358,7 +363,9 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
         if(ctx.simpleDeclaration() != null) {
             visitSimpleDeclaration(ctx.simpleDeclaration(), variable);
         }
-        //TODO check for other
+        //TODO check for other: asmDefinition, namespaceAliasDefinition
+        //TODO using Declaration, usingDirective staticAssertDeclaration
+        //TODO alias Declaration opaqueEnumDeclaration
     }
     private void visitSimpleDeclaration(CPP14Parser.SimpleDeclarationContext ctx, VariableDeclarationNode variable) {
 
@@ -420,6 +427,7 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
 
     private void visitDeclSpecifierSeq(CPP14Parser.DeclSpecifierSeqContext ctx, VariableDeclarationNode variable) {
 
+        // TODO: declSpecifier+? attributeSpecifierSeq?
         //TODO this should be refactored
         //DeclaratorTypeNode node = DeclaratorTypeNode();
         //visitDeclSpecifier(ctx.declSpecifier(0), variable);
@@ -764,6 +772,7 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
     }
 
     private void visitPostfixExpression(CPP14Parser.PostfixExpressionContext ctx, ExpressionNode expression) {
+
         expression.setType("PostfixExpression");
         expression.setValue(ctx.getText());
         if(ctx.postfixExpression() != null){
@@ -772,11 +781,10 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
             expression.addChild(exp);
             var valuee = "";
             if(ctx.expressionList() != null){
+                //TODO: Must add how to handle expressionList
                  valuee = ctx.expressionList().getText();
             }
             if(ctx.expression() != null){
-                System.out.println("NESTOOOOOOOO");
-                System.out.println(ctx.expression().getText());
                 valuee = '['+ctx.expression().getText()+']';
                 ExpressionNode exp2 = new ExpressionNode();
                 exp2.setType("LIST_IDX");
@@ -784,7 +792,6 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
                 expression.addChild(exp2);
             }
             else{
-                System.out.println("===================" + ctx.getText()+"=======================");
                 expression.setValue(ctx.getText());
             }
 
@@ -794,7 +801,6 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
         }
         if(ctx.Dot() != null || ctx.Arrow() != null){
             String idExpression = ctx.idExpression().getText();
-            System.out.println("===================" + idExpression+"=======================");
             if(ctx.postfixExpression().getText().equals("this")){
                 expression.setValue("self." + idExpression);
             }else {
@@ -811,7 +817,7 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
         if (ctx.primaryExpression() != null){
             if(ConvertFunctionCall.hasValue(ctx.primaryExpression().getText())){
                 expression.setType("NormalFunction");
-                expression.setValue(ctx.primaryExpression().getText());
+                expression  .setValue(ctx.primaryExpression().getText());
             }else {
                 visitPrimaryExpression(ctx.primaryExpression(), expression);
             }

@@ -1,8 +1,6 @@
 package ast;
 
-import utils.ClassStorage;
-import utils.ConvertFunctionCall;
-import utils.ConvertOperator;
+import utils.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -83,7 +81,7 @@ public class ExpressionNode extends ASTNode {
                     return sb.toString();
                 }
                 if(this.type.equals("PostfixExpression")){
-                    sb.append(children.get(0).toPython(indent));
+                    sb.append(this.value); //TODO: temp before we fix list
                     return sb.toString();
                 }
                 if(type.equals("LIST_IDX")){
@@ -101,20 +99,27 @@ public class ExpressionNode extends ASTNode {
                 List<String> childStrings = getChildrenStrings(children, indent);
                 if (this.operator != null && !childStrings.isEmpty()) {
                     String operatorString = ConvertOperator.convert(this.operator);
-                    System.out.println("+=====[ "+this.operator + " ]====== "+operatorString);
                     sb.append(String.join(operatorString, childStrings));
                 }
                 return sb.toString();
             }
             if(type.equals("ShiftExpression")){
                 List<String> childStrings = getChildrenStrings(children, indent);
-                System.out.println(childStrings);
                 if(!childStrings.isEmpty() && ConvertFunctionCall.hasValue(childStrings.get(0).toString().trim())){
-                    sb.append(childStrings.get(0));
-                    sb.append("(");
-                    sb.append(String.join(",", childStrings.subList(1, childStrings.size()-1)));
-                    sb.append(")");
+
+                    String key = ConvertFunctionCall.convert(childStrings.get(0).toString().trim());
+                    if(FunctionRegistry.hasHandler(key)){
+                        sb.append(FunctionRegistry.handle(key, childStrings));
+                    }
+                    else{
+                        sb.append(key);
+                        sb.append("(");
+                        sb.append(String.join(",", childStrings.subList(1, childStrings.size()-1)));
+                        sb.append(")");
+                    }
                 }
+                System.out.println("======");
+                System.out.println(sb.toString());
                 return sb.toString();
 
             }
@@ -122,7 +127,6 @@ public class ExpressionNode extends ASTNode {
                 List<String> childStrings = getChildrenStrings(children, indent);
                 if (this.operator != null && !childStrings.isEmpty()) {
                     String operatorString = ConvertOperator.convert(this.operator);
-                    System.out.println("+=====[ "+this.operator + " ]====== "+operatorString);
                     sb.append(String.join(operatorString, childStrings));
                 }
                 return sb.toString();
@@ -130,6 +134,8 @@ public class ExpressionNode extends ASTNode {
             if(this.type.equals("PostfixExpression")){
 
                 if(children.size()> 1){
+                    sb.append(value);
+                }else{
                     sb.append(value);
                 }
                 return sb.toString();
@@ -142,7 +148,6 @@ public class ExpressionNode extends ASTNode {
         }
 
         if (this.type != null && this.type.equals("NormalFunction")){
-            System.out.println("THIS IS NORMAL:" + this.getChildren().toString());
             sb.append(this.getValue());
             return sb.toString();
         }
@@ -159,7 +164,6 @@ public class ExpressionNode extends ASTNode {
 
         if (this.operator != null && !childStrings.isEmpty()) {
             String operatorString = ConvertOperator.convert(this.operator);
-            System.out.println("+=====[ "+this.operator + " ]====== "+operatorString);
             sb.append(String.join(operatorString, childStrings));
         }
         else if (!childStrings.isEmpty()) {

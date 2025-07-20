@@ -12,8 +12,6 @@ public class ConvertFunctionCall {
         FUNCTION_MAPPINGS.put("size","len");
         FUNCTION_MAPPINGS.put("std::cout","print");
         FUNCTION_MAPPINGS.put("cout","print");
-        FUNCTION_MAPPINGS.put("std::endl","");
-        FUNCTION_MAPPINGS.put("endl","");
     }
 
     private ConvertFunctionCall() {}
@@ -25,6 +23,6 @@ public class ConvertFunctionCall {
         FUNCTION_MAPPINGS.put(input.toLowerCase(),function);
     }
     public static boolean hasValue(String value){
-        return FUNCTION_MAPPINGS.containsValue(value.toLowerCase());
+        return FUNCTION_MAPPINGS.containsKey(value.toLowerCase());
     }
 }

@@ -14,7 +14,7 @@ public class example {
 
     public static void main(String[] args) throws IOException {
 
-        CharStream charStream = CharStreams.fromFileName("src/main/tests/input/class_op.cpp");
+        CharStream charStream = CharStreams.fromFileName("src/main/tests/input/destructor_try.cpp");
 
         CPP14Lexer lexer = new CPP14Lexer(charStream);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
@@ -26,7 +26,6 @@ public class example {
         ASTBuilder ast = new ASTBuilder();
         ASTNode root = ast.visit(tree);
         System.out.println(root);
-        System.out.println("------------------------");
 
 
         System.out.println("============= Python End ===========");

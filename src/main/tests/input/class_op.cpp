@@ -9,16 +9,14 @@ private:
 
 public:
 
-    Person() : name("Unknown"), age(0) {}
-
     Person(const std::string& name, int age) : name(name), age(age) {}
 
     std::string getName() const {
         return name;
     }
 
-    void setName(const std::string& newName) {
-        name = newName;
+    void setName(const std::string& name) {
+        this->name = name;
     }
 
     int getAge() const {
@@ -37,14 +35,14 @@ public:
 };
 
 int main() {
-    Person p1;
-    p1.display();
+    Person *p1= new Person("Neko",25);
+    p1->display();
 
     Person p2("Alice", 30);
     p2.display();
 
-    p2.setName("Bob"); //TODO these not working
-    p2.setAge(35); //TODO these one not working
+    p2.setName("Bob");
+    p2.setAge(35);
     p2.display();
 
     return 0;
