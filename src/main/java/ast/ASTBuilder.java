@@ -148,11 +148,8 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
 
      */
     public ASTNode visitFunctionBody(CPP14Parser.FunctionBodyContext ctx, FunctionNode functionNode) {
-        if (ctx.compoundStatement() != null) {
-            CompoundNode cn = visitCompoundStatement(ctx.compoundStatement());
-            functionNode.setBody(cn);
-        }
 
+        //Create constructor
         if (ctx.constructorInitializer() != null) {
             var oldName = functionNode.getFunc_declarator();
             oldName.setDeclaratorId("__init__");
@@ -177,45 +174,64 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
 
         }
 
+        if (ctx.compoundStatement() != null) {
+            CompoundNode cn = visitCompoundStatement(ctx.compoundStatement());
+            functionNode.setBody(cn);
+        }
+        //TODO: look at functionTryBlock
+
         return functionNode;
     }
 
 
     @Override
     public ASTNode visitStatement(CPP14Parser.StatementContext ctx) {
-        if (ctx.compoundStatement() != null) {
-            return visitCompoundStatement(ctx.compoundStatement());
-        }
 
-        if (ctx.declarationStatement() != null) {
+        if (ctx.labeledStatement() != null) {
+            //TODO: look at this
+        }
+        else if (ctx.declarationStatement() != null) {
 
             VariableDeclarationNode variableDeclaration = new VariableDeclarationNode();
             visitDeclarationStatement(ctx.declarationStatement(), variableDeclaration);
             return variableDeclaration;
         }
-        if (ctx.expressionStatement() != null) {
-            CPP14Parser.ExpressionStatementContext expression = ctx.expressionStatement();
-            CPP14Parser.ExpressionContext expr = expression.expression();
-            return visitExpression(expr);
-        }
+        else{
+            //TODO; attributeSpecifierSeq?
+            if (ctx.expressionStatement() != null) {
 
-        if (ctx.jumpStatement() != null) {
-            ASTNode statement = visitJumpStatement(ctx.jumpStatement());
+                CPP14Parser.ExpressionStatementContext expression = ctx.expressionStatement();
+                CPP14Parser.ExpressionContext expr = expression.expression();
+
+                return visitExpression(expr);
+
+            }else if(ctx.compoundStatement() != null) {
+
+                return visitCompoundStatement(ctx.compoundStatement());
+
+            }else if (ctx.iterationStatement() != null) {
+
+                return visitIterationStatement(ctx.iterationStatement());
+
+            }else if (ctx.selectionStatement() != null) {
+
+                return visitSelectionStatement(ctx.selectionStatement());
+
+            }
+            else if (ctx.jumpStatement() != null) {
+                ASTNode statement = visitJumpStatement(ctx.jumpStatement());
 //            if (statement instanceof ExpressionNode) {
 //                ExpressionNode expr = (ExpressionNode) visitJumpStatement(ctx.jumpStatement());
 //                expr.setType("return");
 //            }
-            return statement;
+                return statement;
+            }
+
         }
 
-        if (ctx.iterationStatement() != null) {
-            return visitIterationStatement(ctx.iterationStatement());
-        }
 
-        if (ctx.selectionStatement() != null) {
-            return visitSelectionStatement(ctx.selectionStatement());
-        }
-        // TODO add other statements
+
+
         return null;
     }
 
@@ -233,7 +249,6 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
                 }
             }
         }
-
         return cn;
     }
 
@@ -369,6 +384,9 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
     }
     private void visitSimpleDeclaration(CPP14Parser.SimpleDeclarationContext ctx, VariableDeclarationNode variable) {
 
+        if(ctx.attributeSpecifierSeq() != null) {
+            //TODO: maybe add this
+        }
         if(ctx.declSpecifierSeq() != null) {
             visitDeclSpecifierSeq(ctx.declSpecifierSeq(), variable);
         }
@@ -378,7 +396,8 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
                 DeclaratorNode node = new DeclaratorNode();
                 visitDeclarator(c.declarator(), node);
                 variable.setName(node);
-                List<String> typeList = Arrays.asList("int","string","vector");
+                // Checking if a variable is base type or class
+                List<String> typeList = Arrays.asList("int","string","vector","bool","float","double");
                 if(!typeList.contains(variable.getType())){
                     ClassStorage.getInstance().addVariable(variable.getType(),node.getDeclaratorId());
                 }
@@ -389,9 +408,16 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
             }
         }
     }
+
     public ASTNode visitInitializer(CPP14Parser.InitializerContext ctx) {
         if(ctx.braceOrEqualInitializer() != null) {
-            return visitInitializerClause(ctx.braceOrEqualInitializer().initializerClause());
+
+            if(ctx.braceOrEqualInitializer().initializerClause() != null) {
+                return visitInitializerClause(ctx.braceOrEqualInitializer().initializerClause());
+            }else{
+                //:TODO fix std::string t{"wird"}
+                return null;
+            }
         }
         if (ctx.expressionList() != null) {
             return visitInitializerList(ctx.expressionList().initializerList());
@@ -407,9 +433,10 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
         }
         return null;
     }
+
     public ASTNode visitInitializerList(CPP14Parser.InitializerListContext ctx) {
         ExpressionNode exp = new ExpressionNode();
-        exp.setValue(ctx.getText());
+        exp.setValue("[" + ctx.getText() + "]");
         exp.setType("InitializerList");
         List<CPP14Parser.InitializerClauseContext> list = ctx.initializerClause();
 
@@ -771,42 +798,74 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
         expression.addChild(exp);
     }
 
-    private void visitPostfixExpression(CPP14Parser.PostfixExpressionContext ctx, ExpressionNode expression) {
+    // p1-> nesto() ==> (), p1->nesto ==> (), p1, -> , nesto
+    // p1->nesto(30) ==> (), p1->nesto, list ==> (), p1, ->, nesto, list
+    //
+    private void    visitPostfixExpression(CPP14Parser.PostfixExpressionContext ctx, ExpressionNode expression) {
 
         expression.setType("PostfixExpression");
-        expression.setValue(ctx.getText());
+
+        //expression.setValue(ctx.getText());
+
+        if(ctx.primaryExpression() != null){
+            visitPrimaryExpression(ctx.primaryExpression(), expression);
+        }else if(ctx.postfixExpression() != null){
+
+            ExpressionNode postfixChild = new ExpressionNode();
+            visitPostfixExpression(ctx.postfixExpression(), postfixChild);
+
+            if(ctx.LeftBracket() != null){
+                //ASTNode rightChild =
+
+                if(ctx.expression() != null){
+                   // rightChild = visitExpression(ctx.expression());
+                }else{
+                   // ASTNode backetInitList = new  Nesto();
+                }
+            }
+
+        }
+        var attributes = "";
         if(ctx.postfixExpression() != null){
             ExpressionNode exp = new ExpressionNode();
+
             visitPostfixExpression(ctx.postfixExpression(), exp);
             expression.addChild(exp);
-            var valuee = "";
             if(ctx.expressionList() != null){
                 //TODO: Must add how to handle expressionList
-                 valuee = ctx.expressionList().getText();
+                 attributes = ctx.expressionList().getText();
+                 ExpressionNode exp2 = new ExpressionNode();
+                 exp2.setType("LIST");
+                 exp2.setValue("("+attributes+")");
+                expression.addChild(exp2);
             }
-            if(ctx.expression() != null){
-                valuee = '['+ctx.expression().getText()+']';
+            else if(ctx.expression() != null){
+                attributes = '['+ctx.expression().getText()+']';
                 ExpressionNode exp2 = new ExpressionNode();
                 exp2.setType("LIST_IDX");
-                exp2.setValue(valuee);
+                exp2.setValue(attributes);
                 expression.addChild(exp2);
             }
             else{
                 expression.setValue(ctx.getText());
             }
 
-            if(ctx.expressionList() != null){
-                visitPrimaryExpression(ctx.primaryExpression(), expression);
-            }
+//            if(ctx.expressionList() != null){
+//                visitPrimaryExpression(ctx.primaryExpression(), expression);
+//            }
         }
         if(ctx.Dot() != null || ctx.Arrow() != null){
-            String idExpression = ctx.idExpression().getText();
+            String idExpression = ctx.idExpression().getText(); //TODO add some changes from String->value or something
             if(ctx.postfixExpression().getText().equals("this")){
                 expression.setValue("self." + idExpression);
             }else {
-                String class_e = ClassStorage.getInstance().getClass(idExpression);
-                if (ClassStorage.getInstance().hasFunction(class_e, idExpression)) {
-                    expression.setValue("self." + idExpression);
+
+                String class_e = ClassStorage.getInstance().getClassForFunction(idExpression);
+                if (ClassStorage.getInstance().hasFunction(class_e, idExpression)
+                ) {
+                    ExpressionNode attr = (ExpressionNode) expression.getChildren().getFirst();
+                    expression.setValue(attr.getValue() + "."+idExpression+ "(" + attributes + ")");
+
                 } else {
                     System.err.println("Class " + class_e + " not found");
                     expression.setType("NormalFunction");
@@ -815,6 +874,7 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
             }
         }
         if (ctx.primaryExpression() != null){
+            expression.setType("PrimaryExpression");
             if(ConvertFunctionCall.hasValue(ctx.primaryExpression().getText())){
                 expression.setType("NormalFunction");
                 expression  .setValue(ctx.primaryExpression().getText());
@@ -824,25 +884,22 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
         }
 
         if (ctx.PlusPlus() != null){
-            expression.setOperator(ctx.PlusPlus().getText());
-            expression.setType("postfixIncrement");
+            expression.setValue(expression.getValue().replace("++","+=1"));
+            expression.setOperator("+=1");
+            expression.setType("PostfixIncrement");
         }
 
         if (ctx.MinusMinus() != null){
-            expression.setOperator(ctx.MinusMinus().getText());
-            expression.setType("postfixDecrement");
+            expression.setValue(expression.getValue().replace("--","-=1"));
+            expression.setOperator("-=1");
+            expression.setType("PostfixDecrement");
         }
     }
     private void visitPrimaryExpression(CPP14Parser.PrimaryExpressionContext ctx, ExpressionNode expression) {
-
+        //TODO: This, lambdaExpression
+        expression.setType("PrimaryExpression");
         if(ctx!= null) {
             expression.setValue(ctx.getText());
-            if (ctx.literal() != null) {
-                var l = new LiteralNode();
-                l.setValue(ctx.getText());
-
-                expression.addChild(l);
-            }
         }
     }
 }

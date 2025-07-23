@@ -36,12 +36,22 @@ public class ClassStorage {
         return classVariablesMap.containsKey(className) && classVariablesMap.get(className).contains(variableName);
     }
     public String getClass(String variableName) {
+
         for (Map.Entry<String, Set<String>> entry : classVariablesMap.entrySet()) {
             if (entry.getValue().contains(variableName)) {
                 return entry.getKey();
             }
         }
         return null; // or Optional.empty(), or throw exception if preferred
+    }
+    public String getClassForFunction(String functionName){
+
+        for (Map.Entry<String, Set<String>> entry : classFunctionMap.entrySet()) {
+            if(entry.getValue().contains(functionName)){
+                return entry.getKey();
+            }
+        }
+        return null;
     }
 
     public boolean hasFunction(String className, String functionName) {

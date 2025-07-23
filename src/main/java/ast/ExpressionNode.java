@@ -75,19 +75,34 @@ public class ExpressionNode extends ASTNode {
                     sb.append(value);
                     return sb.toString();
                 }
+                if(type.equals("List")){
+                    sb.append(value);
+                    return sb.toString();
+                }
                 if(type.equals("PointerMemberExpression")){
                     String formated = ConvertFunctionCall.convert(value);
                     sb.append(formated).append(" ");
                     return sb.toString();
                 }
                 if(this.type.equals("PostfixExpression")){
-                    sb.append(this.value); //TODO: temp before we fix list
+                    sb.append(((ExpressionNode)this.children.get(0)).getValue());
+                    return sb.toString();
+                }
+                if(this.type.equals("PrefixExpression")){
                     return sb.toString();
                 }
                 if(type.equals("LIST_IDX")){
                     sb.append(value);
                     return sb.toString();
                 }
+                if(this.type.equals("PostfixIncrement")){
+                    sb.append(value);
+                    return sb.toString();
+                }if(this.type.equals("PostfixDecrement")){
+                    sb.append(value);
+                    return sb.toString();
+                }
+
             }
             String childString = this.children.get(0).toPython(indent);
             sb.append(childString);
@@ -118,8 +133,6 @@ public class ExpressionNode extends ASTNode {
                         sb.append(")");
                     }
                 }
-                System.out.println("======");
-                System.out.println(sb.toString());
                 return sb.toString();
 
             }
@@ -134,7 +147,9 @@ public class ExpressionNode extends ASTNode {
             if(this.type.equals("PostfixExpression")){
 
                 if(children.size()> 1){
-                    sb.append(value);
+                    for(int i = 0; i < children.size(); i++){
+                        sb.append(children.get(i).toPython(indent));
+                    }
                 }else{
                     sb.append(value);
                 }
@@ -142,7 +157,9 @@ public class ExpressionNode extends ASTNode {
             }
             if(type.equals("InitializerList")){
                 List<String> childStrings = getChildrenStrings(children, indent);
+                sb.append("[");
                 sb.append(String.join(",", childStrings));
+                sb.append("]");
                 return sb.toString();
             }
         }
