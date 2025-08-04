@@ -550,6 +550,7 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
             expr.addChild(right);
             expr.setOperator(operator);
             expr.setValue(ctx.getText());
+            expr.setType("AssignmentExpression");
             return expr;
         }
     }
@@ -805,23 +806,14 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
 
         expression.setType("PostfixExpression");
 
-        //expression.setValue(ctx.getText());
-
         if(ctx.primaryExpression() != null){
             visitPrimaryExpression(ctx.primaryExpression(), expression);
         }else if(ctx.postfixExpression() != null){
 
             ExpressionNode postfixChild = new ExpressionNode();
             visitPostfixExpression(ctx.postfixExpression(), postfixChild);
-
-            if(ctx.LeftBracket() != null){
-                //ASTNode rightChild =
-
-                if(ctx.expression() != null){
-                   // rightChild = visitExpression(ctx.expression());
-                }else{
-                   // ASTNode backetInitList = new  Nesto();
-                }
+            if(ctx.postfixExpression().getText().equals("this")){
+                expression.setType("Constructor");
             }
 
         }
@@ -850,27 +842,27 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
                 expression.setValue(ctx.getText());
             }
 
-//            if(ctx.expressionList() != null){
-//                visitPrimaryExpression(ctx.primaryExpression(), expression);
-//            }
         }
         if(ctx.Dot() != null || ctx.Arrow() != null){
+            LiteralNode literal = new LiteralNode();
             String idExpression = ctx.idExpression().getText(); //TODO add some changes from String->value or something
-            if(ctx.postfixExpression().getText().equals("this")){
-                expression.setValue("self." + idExpression);
-            }else {
+            literal.setValue(idExpression);
+            expression.addChild(literal);
 
-                String class_e = ClassStorage.getInstance().getClassForFunction(idExpression);
-                if (ClassStorage.getInstance().hasFunction(class_e, idExpression)
-                ) {
-                    ExpressionNode attr = (ExpressionNode) expression.getChildren().getFirst();
-                    expression.setValue(attr.getValue() + "."+idExpression+ "(" + attributes + ")");
+            String class_e = ClassStorage.getInstance().getClassForFunction(idExpression);
 
-                } else {
-                    System.err.println("Class " + class_e + " not found");
-                    expression.setType("NormalFunction");
-                    expression.setValue(ConvertFunctionCall.convert(idExpression)+ "(" +ctx.postfixExpression().getText()+")");
-                }
+            if(ctx.postfixExpression().getText().contains("this")){
+                expression.setType("Constructor");
+
+            }
+            else if (ClassStorage.getInstance().hasFunction(class_e, idExpression)
+            ) {
+                ExpressionNode attr = (ExpressionNode) expression.getChildren().getFirst();
+                expression.setValue(attr.getValue() + "."+idExpression+ "(" + attributes + ")");
+            } else {
+                System.err.println("Class " + class_e + " not found");
+                expression.setType("NormalFunction");
+                expression.setValue(ConvertFunctionCall.convert(idExpression)+ "(" +ctx.postfixExpression().getText()+")");
             }
         }
         if (ctx.primaryExpression() != null){

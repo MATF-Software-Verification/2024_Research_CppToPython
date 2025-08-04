@@ -50,14 +50,10 @@ public class ExpressionNode extends ASTNode {
         return sb.toString();
     }
 
-    private List<String> getChildrenStrings(List<ASTNode> childrens, int indent){
+    private List<String> getChildrenStrings(List<ASTNode> children, int indent){
         List<String> childStrings = children.stream()
                 .map(node -> {
-                    if (node instanceof ExpressionNode) {
-                        return ((ExpressionNode) node).toPython(indent);
-                    } else {
-                        return node.toPython(indent);
-                    }
+                       return node.toPython(indent);
                 })
                 .collect(Collectors.toList());
         return childStrings;
@@ -118,6 +114,16 @@ public class ExpressionNode extends ASTNode {
                 }
                 return sb.toString();
             }
+            if(type.equals("AssignmentExpression")){
+                List<String> childStrings = getChildrenStrings(children, indent);
+                System.out.println("============================");
+                System.out.println(childStrings);
+                if(this.operator != null && childStrings.size() == 2) {
+                    String operatorString = ConvertOperator.convert(this.operator);
+                    sb.append(String.join(operatorString, childStrings));
+                }
+                return sb.toString();
+            }
             if(type.equals("ShiftExpression")){
                 List<String> childStrings = getChildrenStrings(children, indent);
                 if(!childStrings.isEmpty() && ConvertFunctionCall.hasValue(childStrings.get(0).toString().trim())){
@@ -162,6 +168,10 @@ public class ExpressionNode extends ASTNode {
                 sb.append("]");
                 return sb.toString();
             }
+            if(type.equals("Constructor")){
+                sb.append("self.");
+                sb.append(children.get(1).toPython(indent));
+                return sb.toString();           }
         }
 
         if (this.type != null && this.type.equals("NormalFunction")){
