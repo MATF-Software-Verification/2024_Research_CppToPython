@@ -9,10 +9,13 @@ private:
 
 public:
 
-    Person(const std::string& name, int age) : name(name), age(age) {}
+    Person(const std::string& name, int age) {
+        this.name = name;
+        this.age = age;
+    }
 
     std::string getName() const {
-        return name;
+        return this.name;
     }
 
     void setName(const std::string& name) {

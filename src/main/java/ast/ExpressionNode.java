@@ -163,30 +163,21 @@ public class ExpressionNode extends ASTNode {
             }
             if(type.equals("InitializerList")){
                 List<String> childStrings = getChildrenStrings(children, indent);
-                sb.append("[");
                 sb.append(String.join(",", childStrings));
-                sb.append("]");
                 return sb.toString();
             }
             if(type.equals("Constructor")){
                 sb.append("self.");
                 sb.append(children.get(1).toPython(indent));
-                return sb.toString();           }
+                return sb.toString();
+            }
         }
 
         if (this.type != null && this.type.equals("NormalFunction")){
             sb.append(this.getValue());
             return sb.toString();
         }
-        List<String> childStrings = children.stream()
-                .map(node -> {
-                    if (node instanceof ExpressionNode) {
-                        return ((ExpressionNode) node).toPython(indent);
-                    } else {
-                        return node.toPython(indent);
-                    }
-                })
-                .collect(Collectors.toList());
+        List<String> childStrings = getChildrenStrings(this.children, indent);
 
 
         if (this.operator != null && !childStrings.isEmpty()) {
