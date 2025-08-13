@@ -1,5 +1,7 @@
 package ast;
 
+import utils.ClassStorage;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -76,7 +78,12 @@ public class FunctionNode extends ASTNode{
         StringBuilder sb = new StringBuilder();
         StringBuilder code = new StringBuilder();
         code.append("def ");
-        code.append(func_declarator.getDeclaratorId());
+        if (ClassStorage.getInstance().getClassNames().contains(func_declarator.getDeclaratorId())) {
+            code.append("__init__");
+        }
+        else
+            code.append(func_declarator.getDeclaratorId());
+        
         code.append("(");
         if(in_class){
             code.append("self");
