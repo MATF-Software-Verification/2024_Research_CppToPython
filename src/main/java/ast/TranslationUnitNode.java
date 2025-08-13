@@ -19,6 +19,7 @@ public class TranslationUnitNode extends ASTNode {
     @Override
     public  String toPython(int indent) {
         StringBuilder sb = new StringBuilder();
+        sb.append("import typing\n\n");
         for (ASTNode declaration : declarations) {
             sb.append(declaration.toPython(indent));
         }
