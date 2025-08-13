@@ -2,6 +2,7 @@ package ast;
 
 import utils.ClassStorage;
 import utils.FunctionStorage;
+import utils.TypeMapper;
 
 /*
  can be used as PARAMETER NODE for function parameters w/o expression field.
@@ -109,7 +110,10 @@ public class VariableDeclarationNode extends ASTNode {
         else if (type != null && ClassStorage.getInstance().hasClass(type)) {
 
             line.append(getNameOut());
-            line.append("=").append(getType()).append("(");
+            line.append("=");
+            if (this.type != null)
+                line.append(getType());
+            line.append("(");
             if(expression != null) {
                 line.append(((ExpressionNode)expression).toPython(0));
             }
@@ -126,9 +130,15 @@ public class VariableDeclarationNode extends ASTNode {
             sb.append(line);
         }
         else {
+            line.append(getNameOut());
+            if (this.type != null) {
+                line.append(": ");
+                line.append(TypeMapper.mapCppTypeToPython(this.type));
+            }
+            line.append(" = ");
             if (expression != null) {
-                line.append(getNameOut());
-                line.append(" = ");
+//                line.append(getNameOut());
+//                line.append(" = ");
                 line.append(expression.toPython(indent));
             }
             sb.append(line);

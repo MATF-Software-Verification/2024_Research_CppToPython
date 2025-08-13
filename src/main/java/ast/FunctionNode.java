@@ -96,7 +96,11 @@ public class FunctionNode extends ASTNode{
                 }
             }
         }
-        code.append("):");
+        code.append(")");
+        if (this.return_value != null)
+            code.append(" -> ").append(this.return_value);
+
+        code.append(":");
         sb.append(getIndentedPythonCode(indent, code.toString()));
         sb.append(body.toPython(indent+1));
 
