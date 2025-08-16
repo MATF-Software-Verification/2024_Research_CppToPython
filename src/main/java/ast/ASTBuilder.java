@@ -3,6 +3,7 @@ package ast;
 import antlr.CPP14Parser;
 import antlr.CPP14ParserBaseVisitor;
 import ast.condition.SelectionNode;
+import ast.functions.FunctionNode;
 import ast.iteration.ForNode;
 import ast.iteration.ForRangeNode;
 import ast.iteration.WhileNode;
@@ -58,11 +59,17 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
         DeclaratorNode decl = new DeclaratorNode();
         visitDeclarator(ctx.declarator(), decl);
 
-        if(from_class) {
-            ClassStorage.getInstance().addFunction(class_name, decl.getDeclaratorId());
-        }
-        FunctionStorage.getInstance().addFunction(decl.getDeclaratorId());
+//        if(from_class) {
+//            ClassStorage.getInstance().addFunction(class_name, decl.getDeclaratorId());
+//        }
+//        FunctionStorage.getInstance().addFunction(decl.getDeclaratorId());
+
         FunctionNode functionNode = new FunctionNode(return_value, decl, from_class);
+
+        if (from_class && decl.getDeclaratorId() != null && decl.getDeclaratorId().equals(class_name)) {
+            functionNode.setConstructor(true);
+            functionNode.setOwnerClassName(class_name);
+        }
 
         if (ctx.functionBody() != null) {
             visitFunctionBody(ctx.functionBody(), functionNode);
@@ -114,7 +121,6 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
 
     }
 
-
     public void visitParametersAndQualifiers(CPP14Parser.ParametersAndQualifiersContext ctx, DeclaratorNode decl) {
 
         if (ctx.parameterDeclarationClause() != null) {
@@ -149,29 +155,23 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
      */
     public ASTNode visitFunctionBody(CPP14Parser.FunctionBodyContext ctx, FunctionNode functionNode) {
 
-        //Create constructor
         if (ctx.constructorInitializer() != null) {
-            var oldName = functionNode.getFunc_declarator();
-            oldName.setDeclaratorId("__init__");
-
             var memList = ctx.constructorInitializer().memInitializerList();
             CompoundNode cn = new CompoundNode();
-            for (var mem : memList.memInitializer()){
-                DeclaratorNode decl = new DeclaratorNode();
-                decl.setDeclaratorId("self."+mem.meminitializerid().getText());
+            for (var mem : memList.memInitializer()) {
+                DeclaratorNode d = new DeclaratorNode();
+                d.setDeclaratorId("self." + mem.meminitializerid().getText());
 
                 ExpressionNode expr = new ExpressionNode();
-                expr.setValue(mem.expressionList().getText());
+                expr.setValue(mem.expressionList() != null ? mem.expressionList().getText() : "None");
 
                 VariableDeclarationNode vd = new VariableDeclarationNode();
-                vd.setName(decl);
+                vd.setName(d);
                 vd.setExpression(expr);
 
                 cn.add(vd);
             }
-
             functionNode.setBody(cn);
-
         }
 
         if (ctx.compoundStatement() != null) {
@@ -812,58 +812,33 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
 
             ExpressionNode postfixChild = new ExpressionNode();
             visitPostfixExpression(ctx.postfixExpression(), postfixChild);
-            if(ctx.postfixExpression().getText().equals("this")){
-                expression.setType("Constructor");
-            }
-
-        }
-        var attributes = "";
-        if(ctx.postfixExpression() != null){
-            ExpressionNode exp = new ExpressionNode();
-
-            visitPostfixExpression(ctx.postfixExpression(), exp);
-            expression.addChild(exp);
-            if(ctx.expressionList() != null){
-                //TODO: Must add how to handle expressionList
-                 attributes = ctx.expressionList().getText();
-                 ExpressionNode exp2 = new ExpressionNode();
-                 exp2.setType("LIST");
-                 exp2.setValue("("+attributes+")");
-                expression.addChild(exp2);
-            }
-            else if(ctx.expression() != null){
-                attributes = '['+ctx.expression().getText()+']';
-                ExpressionNode exp2 = new ExpressionNode();
-                exp2.setType("LIST_IDX");
-                exp2.setValue(attributes);
-                expression.addChild(exp2);
-            }
-            else{
-                expression.setValue(ctx.getText());
-            }
+            expression.addChild(postfixChild);
 
         }
         if(ctx.Dot() != null || ctx.Arrow() != null){
             LiteralNode literal = new LiteralNode();
-            String idExpression = ctx.idExpression().getText(); //TODO add some changes from String->value or something
-            literal.setValue(idExpression);
+            literal.setValue(ctx.idExpression().getText());//TODO add some changes from String->value or something
             expression.addChild(literal);
-
-            String class_e = ClassStorage.getInstance().getClassForFunction(idExpression);
-
-            if(ctx.postfixExpression().getText().contains("this")){
-                expression.setType("Constructor");
-
+        }
+        if (ctx.expressionList() != null) {
+            ExpressionNode args = new ExpressionNode();
+            args.setType("LIST");
+            args.setValue("(" + ctx.expressionList().getText() + ")");
+            expression.addChild(args);
+        } else {
+            String raw = ctx.getText();
+            if (raw.endsWith("()")) {
+                ExpressionNode args = new ExpressionNode();
+                args.setType("LIST");
+                args.setValue("()");
+                expression.addChild(args);
             }
-            else if (ClassStorage.getInstance().hasFunction(class_e, idExpression)
-            ) {
-                ExpressionNode attr = (ExpressionNode) expression.getChildren().getFirst();
-                expression.setValue(attr.getValue() + "."+idExpression+ "(" + attributes + ")");
-            } else {
-                System.err.println("Class " + class_e + " not found");
-                expression.setType("NormalFunction");
-                expression.setValue(ConvertFunctionCall.convert(idExpression)+ "(" +ctx.postfixExpression().getText()+")");
-            }
+        }
+        if (ctx.expression() != null && rawHasBracket(ctx)) {
+            ExpressionNode idx = new ExpressionNode();
+            idx.setType("LIST_IDX");
+            idx.setValue("[" + ctx.expression().getText() + "]");
+            expression.addChild(idx);
         }
         if (ctx.primaryExpression() != null){
             expression.setType("PrimaryExpression");
@@ -875,17 +850,26 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
             }
         }
 
-        if (ctx.PlusPlus() != null){
-            expression.setValue(expression.getValue().replace("++","+=1"));
-            expression.setOperator("+=1");
+        if (ctx.PlusPlus() != null) {
             expression.setType("PostfixIncrement");
+            expression.setOperator("+=");
+            String baseText = expression.getChildren().isEmpty() ? "" : expression.getChildren().get(0).toPython(0);
+            expression.setValue(baseText + " += 1");
+            return;
         }
-
-        if (ctx.MinusMinus() != null){
-            expression.setValue(expression.getValue().replace("--","-=1"));
-            expression.setOperator("-=1");
+        if (ctx.MinusMinus() != null) {
             expression.setType("PostfixDecrement");
+            expression.setOperator("-=");
+            String baseText = expression.getChildren().isEmpty() ? "" : expression.getChildren().get(0).toPython(0);
+            expression.setValue(baseText + " -= 1");
+            return;
         }
+    }
+
+    private static boolean rawHasBracket(CPP14Parser.PostfixExpressionContext ctx) {
+        String t = ctx.getText();
+        int lb = t.lastIndexOf('['), rb = t.lastIndexOf(']');
+        return lb >= 0 && rb > lb;
     }
     private void visitPrimaryExpression(CPP14Parser.PrimaryExpressionContext ctx, ExpressionNode expression) {
         //TODO: This, lambdaExpression

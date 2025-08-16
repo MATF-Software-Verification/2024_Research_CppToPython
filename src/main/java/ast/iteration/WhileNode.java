@@ -2,6 +2,7 @@ package ast.iteration;
 
 import ast.ASTNode;
 import ast.ExpressionNode;
+import ast.codegen.CodegenContext;
 
 public class WhileNode  extends  IterationNode {
 
@@ -19,6 +20,11 @@ public class WhileNode  extends  IterationNode {
 
     public void setCondition(ASTNode condition) {
         this.condition = condition;
+    }
+
+    @Override
+    protected String nodeLabel() {
+        return "";
     }
 
     @Override
@@ -50,5 +56,10 @@ public class WhileNode  extends  IterationNode {
         }
 
         return sb.toString();
+    }
+
+    @Override
+    public String toPython(int indent, CodegenContext ctx) {
+        return "";
     }
 }

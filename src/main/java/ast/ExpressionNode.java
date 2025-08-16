@@ -1,5 +1,6 @@
 package ast;
 
+import ast.codegen.CodegenContext;
 import utils.*;
 
 import java.util.ArrayList;
@@ -32,6 +33,62 @@ public class ExpressionNode extends ASTNode {
     public void addChild(ASTNode child) { children.add(child); }
 
     @Override
+    protected String nodeLabel() {
+        String t = (type == null ? "" : "type=" + type);
+        String op = (operator == null ? "" : ", op=" + operator);
+        String v = (value == null ? "" : ", val=" + value);
+        return "Expr(" + t + op + v + ")";
+    }
+    @Override
+    public String toTree(int indent) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(line(indent, nodeLabel()));
+        for (ASTNode c : children) {
+            sb.append(c.toTree(indent + 1));
+        }
+        return sb.toString();
+    }
+
+    private static int prec(String kind) {
+        if (kind == null) return 100;
+        return switch (kind) {
+            case "PrimaryExpression"        -> 100;
+            case "PostfixExpression"        -> 90;  // call, index, attribute
+            case "MultiplicativeExpression" -> 70;
+            case "AdditiveExpression"       -> 60;
+            case "ShiftExpression"          -> 50;
+            case "RelationalExpression"     -> 40;
+            case "EqualityExpression"       -> 30;
+            case "AndExpression"            -> 25;  // bitwise &
+            case "ExclusiveOrExpression"    -> 22;  // ^
+            case "InclusiveOrExpression"    -> 21;  // |
+            case "LogicalAndExpression"     -> 15;  // &&
+            case "LogicalOrExpression"      -> 10;  // ||
+            case "AssignmentExpression"     -> 0;
+            default                         -> 100;
+        };
+    }
+    private static String exprString(ASTNode node, int parentPrec) {
+        String s = node.toPython(0);
+        if (node instanceof ExpressionNode en) {
+            int cp = prec(en.getType());
+            if (cp < parentPrec) return "(" + s + ")";
+        }
+        return s;
+    }
+    private static String joinWith(List<ASTNode> kids, String op, int parentPrec) {
+        List<String> parts = new ArrayList<>(kids.size());
+        for (ASTNode k : kids) parts.add(exprString(k, parentPrec));
+        String glue = " " + op + " ";
+        return String.join(glue, parts);
+    }
+
+    private List<String> childExprs(int parentPrec) {
+        return children.stream().map(c -> exprString(c, parentPrec)).collect(Collectors.toList());
+    }
+
+    @Deprecated
+    @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("Expression:");
@@ -50,147 +107,224 @@ public class ExpressionNode extends ASTNode {
         return sb.toString();
     }
 
-    private List<String> getChildrenStrings(List<ASTNode> children, int indent){
-        List<String> childStrings = children.stream()
-                .map(node -> {
-                       return node.toPython(indent);
-                })
-                .collect(Collectors.toList());
-        return childStrings;
+    @Override
+    public String toPython(int indent) {
+
+        String leaf = renderLeaf();
+        if (leaf != null) return leaf;
+
+        if (children.size() == 1) {
+            if (type != null) {
+                switch (type) {
+                    case "PostfixIncrement":
+                    case "PostfixDecrement":
+                        return value == null ? "" : value;
+
+                    case "PointerMemberExpression": {
+                        String conv = ConvertFunctionCall.convert(value == null ? "" : value);
+                        return conv;
+                    }
+
+                    case "PrefixExpression":
+                        return value == null ? "" : value;
+
+                    case "PostfixExpression": {
+                        return children.get(0).toPython(0);
+                    }
+                    case "PrimaryExpression":
+                    {
+                        if("this".equals(value)){
+                            return "self";
+                        }
+                    }
+
+                    default:
+                        return children.get(0).toPython(0);
+                }
+            }
+            return children.get(0).toPython(0);
+        }
+
+        // Multi-child
+        if (type != null) {
+            switch (type) {
+                case "AssignmentExpression": {
+                    List<String> parts = childExprs(prec("AssignmentExpression"));
+                    if (operator != null && parts.size() == 2) {
+                        String left  = (children.size() > 0) ? children.get(0).toPython(0) : "";
+                        String right = (children.size() > 1) ? children.get(1).toPython(0) : "";
+                        String op = mapAssignmentOperator(operator);
+                        return left + " " + op + " " + right;
+                    }
+                    return String.join(" ", parts);
+                }
+
+                case "AdditiveExpression": {
+                    String op = mapAssignmentOperator(operator);
+                    return joinWith(children, op, prec("AdditiveExpression"));
+                }
+
+                case "MultiplicativeExpression": {
+                    String op = mapAssignmentOperator(operator);
+                    return joinWith(children, op, prec("MultiplicativeExpression"));
+                }
+
+                case "ShiftExpression": {
+                    List<String> parts = childExprs(prec("ShiftExpression"));
+                    if (!parts.isEmpty()) {
+                        String first = parts.get(0).trim();
+                        String key = ConvertFunctionCall.convert(first);
+                        if (ConvertFunctionCall.hasValue(first) && FunctionRegistry.hasHandler(key)) {
+                            return FunctionRegistry.handle(key, parts);
+                        } else if (ConvertFunctionCall.hasValue(first)) {
+                            String args = parts.size() > 1 ? String.join(", ", parts.subList(1, parts.size())) : "";
+                            return key + "(" + args + ")";
+                        }
+                    }
+                    String op = ConvertOperator.convert(operator == null ? "<<" : operator);
+                    return joinWith(children, op, prec("ShiftExpression"));
+                }
+
+                case "RelationalExpression": {
+                    String op = ConvertOperator.convert(operator == null ? "<" : operator);
+                    return joinWith(children, op, prec("RelationalExpression"));
+                }
+
+                case "EqualityExpression": {
+                    String op = ConvertOperator.convert(operator == null ? "==" : operator);
+                    return joinWith(children, op, prec("EqualityExpression"));
+                }
+
+                case "LogicalAndExpression": {
+                    String op = ConvertOperator.convert("&&");
+                    return joinWith(children, op, prec("LogicalAndExpression"));
+                }
+
+                case "LogicalOrExpression": {
+                    String op = ConvertOperator.convert("||");
+                    return joinWith(children, op, prec("LogicalOrExpression"));
+                }
+
+                case "InitializerList": {
+                    List<String> parts = childExprs(100);
+                    return String.join(", ", parts);
+                }
+
+                case "Constructor": {
+                    if (children.size() > 1) return "self." + children.get(1).toPython(0);
+                    return value == null ? "" : value;
+                }
+
+                case "PostfixExpression": {
+                    if (children.size() == 2
+                            && children.get(0) instanceof ExpressionNode en0
+                            && "PostfixExpression".equals(en0.getType())
+                            && en0.getChildren().size() >= 2
+                            && en0.getChildren().get(1) instanceof LiteralNode lit
+                            && children.get(1) instanceof ExpressionNode argsEn
+                            && "LIST".equals(((ExpressionNode) children.get(1)).getType())) {
+
+                        String base   = en0.getChildren().get(0).toPython(0);
+                        String member = ((LiteralNode) en0.getChildren().get(1)).getValue();
+                        String args   = stripParens(((ExpressionNode) children.get(1)).getValue());
+
+                        String mapped = ConvertFunctionCall.convert(member == null ? "" : member);
+
+                        if ("len".equals(mapped)) {
+                            return "len(" + base + ")";
+                        }
+
+                        return base + "." + mapped + "(" + args + ")";
+                    }
+
+                    StringBuilder out = new StringBuilder();
+                    out.append(children.get(0).toPython(0));
+                    for (int i = 1; i < children.size(); i++) {
+                        ASTNode ch = children.get(i);
+
+                        if (ch instanceof LiteralNode lit) {
+                            out.append(".").append(lit.getValue());
+                            continue;
+                        }
+                        if (ch instanceof ExpressionNode en) {
+                            String t = en.getType();
+                            String v = en.getValue();
+                            if ("LIST".equals(t) || "LIST_IDX".equals(t)) {
+                                out.append(v == null ? "" : v);
+                                continue;
+                            }
+                        }
+                        out.append(ch.toPython(0));
+                    }
+                    return out.toString();
+                }
+            }
+        }
+
+        if (operator != null) {
+            String op = ConvertOperator.convert(operator);
+            return joinWith(children, op, 50);
+        }
+        return children.get(0).toPython(0);
     }
 
     @Override
-    public String toPython(int indent) {
-        StringBuilder sb = new StringBuilder();
-        if (children.isEmpty()) {
-            return sb.append(value).toString();
-        }
-        if (this.children.size() == 1) {
-            if(type != null){
-                if(type.equals("NormalFunction")){
-                    sb.append(value);
-                    return sb.toString();
-                }
-                if(type.equals("List")){
-                    sb.append(value);
-                    return sb.toString();
-                }
-                if(type.equals("PointerMemberExpression")){
-                    String formated = ConvertFunctionCall.convert(value);
-                    sb.append(formated).append(" ");
-                    return sb.toString();
-                }
-                if(this.type.equals("PostfixExpression")){
-                    sb.append(((ExpressionNode)this.children.get(0)).getValue());
-                    return sb.toString();
-                }
-                if(this.type.equals("PrefixExpression")){
-                    return sb.toString();
-                }
-                if(type.equals("LIST_IDX")){
-                    sb.append(value);
-                    return sb.toString();
-                }
-                if(this.type.equals("PostfixIncrement")){
-                    sb.append(value);
-                    return sb.toString();
-                }if(this.type.equals("PostfixDecrement")){
-                    sb.append(value);
-                    return sb.toString();
-                }
-
-            }
-            String childString = this.children.get(0).toPython(indent);
-            sb.append(childString);
-
-            return sb.toString();
-        }
-        if(type != null){
-            if(type.equals("AdditiveExpression")){
-                List<String> childStrings = getChildrenStrings(children, indent);
-                if (this.operator != null && !childStrings.isEmpty()) {
-                    String operatorString = ConvertOperator.convert(this.operator);
-                    sb.append(String.join(operatorString, childStrings));
-                }
-                return sb.toString();
-            }
-            if(type.equals("AssignmentExpression")){
-                List<String> childStrings = getChildrenStrings(children, indent);
-                System.out.println("============================");
-                System.out.println(childStrings);
-                if(this.operator != null && childStrings.size() == 2) {
-                    String operatorString = ConvertOperator.convert(this.operator);
-                    sb.append(String.join(operatorString, childStrings));
-                }
-                return sb.toString();
-            }
-            if(type.equals("ShiftExpression")){
-                List<String> childStrings = getChildrenStrings(children, indent);
-                if(!childStrings.isEmpty() && ConvertFunctionCall.hasValue(childStrings.get(0).toString().trim())){
-
-                    String key = ConvertFunctionCall.convert(childStrings.get(0).toString().trim());
-                    if(FunctionRegistry.hasHandler(key)){
-                        sb.append(FunctionRegistry.handle(key, childStrings));
-                    }
-                    else{
-                        sb.append(key);
-                        sb.append("(");
-                        sb.append(String.join(",", childStrings.subList(1, childStrings.size()-1)));
-                        sb.append(")");
-                    }
-                }
-                return sb.toString();
-
-            }
-            if(type.equals("RelationalExpression")){
-                List<String> childStrings = getChildrenStrings(children, indent);
-                if (this.operator != null && !childStrings.isEmpty()) {
-                    String operatorString = ConvertOperator.convert(this.operator);
-                    sb.append(String.join(operatorString, childStrings));
-                }
-                return sb.toString();
-            }
-            if(this.type.equals("PostfixExpression")){
-
-                if(children.size()> 1){
-                    for(int i = 0; i < children.size(); i++){
-                        sb.append(children.get(i).toPython(indent));
-                    }
-                }else{
-                    sb.append(value);
-                }
-                return sb.toString();
-            }
-            if(type.equals("InitializerList")){
-                List<String> childStrings = getChildrenStrings(children, indent);
-                sb.append(String.join(",", childStrings));
-                return sb.toString();
-            }
-            if(type.equals("Constructor")){
-                sb.append("self.");
-                sb.append(children.get(1).toPython(indent));
-                return sb.toString();
-            }
-        }
-
-        if (this.type != null && this.type.equals("NormalFunction")){
-            sb.append(this.getValue());
-            return sb.toString();
-        }
-        List<String> childStrings = getChildrenStrings(this.children, indent);
-
-
-        if (this.operator != null && !childStrings.isEmpty()) {
-            String operatorString = ConvertOperator.convert(this.operator);
-            sb.append(String.join(operatorString, childStrings));
-        }
-        else if (!childStrings.isEmpty()) {
-            sb.append(childStrings.get(0));
-        }
-
-        return sb.toString();
+    public String toPython(int indent, CodegenContext ctx) {
+        String s = toPython(indent);
+        if (s != null && !s.isEmpty()) ctx.out.writeln(s);
+        return "";
     }
 
+    private static String normalizePrimary(String v) {
+        if (v == null) return "";
+        if ("this".equals(v)) return "self";
+        if ("true".equals(v)) return "True";
+        if ("false".equals(v)) return "False";
+        if ("nullptr".equals(v) || "NULL".equals(v)) return "None";
+        return v;
+    }
 
+    private static String mapAssignmentOperator(String op) {
+        if (op == null) return "=";
+        switch (op) {
+            case "=":   case "+=": case "-=": case "*=": case "/=": case "%=":
+            case "<<=": case ">>=": case "&=": case "^=": case "|=":
+                return op;
+            default:
+                return op;
+        }
+    }
+    private String renderLeaf() {
+        if (!children.isEmpty()) return null;
 
+        if (type == null) {
+            return value == null ? "" : value;
+        }
+
+        switch (type) {
+            case "PrimaryExpression":
+                return normalizePrimary(value);
+
+            case "LIST":
+            case "LIST_IDX":
+            case "NormalFunction":
+            case "PostfixIncrement":
+            case "PostfixDecrement":
+                return value == null ? "" : value;
+
+            case "PointerMemberExpression":
+                return ConvertFunctionCall.convert(value == null ? "" : value);
+
+            default:
+                return value == null ? "" : value;
+        }
+    }
+    private static String stripParens(String s) {
+        if (s == null) return "";
+        s = s.trim();
+        if (s.length() >= 2 && s.charAt(0) == '(' && s.charAt(s.length()-1) == ')') {
+            return s.substring(1, s.length()-1).trim();
+        }
+        return s;
+    }
 }

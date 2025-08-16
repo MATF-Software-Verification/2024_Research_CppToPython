@@ -1,11 +1,10 @@
 package ast;
 
+import ast.codegen.CodegenContext;
 import utils.ClassStorage;
 import utils.FunctionStorage;
 
-/*
- can be used as PARAMETER NODE for function parameters w/o expression field.
- */
+
 public class VariableDeclarationNode extends ASTNode {
 
     private String type;
@@ -45,10 +44,10 @@ public class VariableDeclarationNode extends ASTNode {
     public DeclaratorNode getName() {
         return name;
     }
-    public String getNameOut(){
-        return name.getDeclaratorId();
-    }
 
+    public String getNameOut() {
+        return name != null ? name.getDeclaratorId() : "_";
+    }
     public void setName(DeclaratorNode name) {
         this.name = name;
     }
@@ -66,6 +65,24 @@ public class VariableDeclarationNode extends ASTNode {
         this.expression = expression;
     }
 
+    @Override
+    protected String nodeLabel() {
+        String id = getNameOut();
+        String t = (type == null ? "" : ", type=" + type);
+        String cm = classMember ? ", member" : "";
+        String init = (expression != null) ? ", init" : "";
+        return "VarDecl(" + id + t + cm + init + ")";
+    }
+
+    @Override
+    public String toTree(int indent) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(line(indent, nodeLabel()));
+        if (expression != null) sb.append(expression.toTree(indent + 1));
+        return sb.toString();
+    }
+    @Deprecated
+    @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
 
@@ -135,5 +152,72 @@ public class VariableDeclarationNode extends ASTNode {
         }
 
         return sb.toString();
+    }
+
+
+    @Override
+    public String toPython(int indent, CodegenContext ctx) {
+        if ("class".equals(type) && expression != null) {
+            String forwarded = expression.toPython(indent, ctx);
+            if (forwarded != null && !forwarded.isEmpty()) ctx.out.write(forwarded);
+            return "";
+        }
+
+        final String id = getNameOut();
+        System.out.println(" MY NAME "+ id);
+        if (type == null && expression == null && id != null) {
+
+            if (ctx.syms.inClassScope() && ctx.syms.classHasMethod(ctx.syms.currentClass(), id)) {
+                ctx.out.writeln("self." + id + "()");
+                return "";
+            }
+            if (ctx.syms.isFreeFunction(id)) {
+                ctx.out.writeln(id + "()");
+                return "";
+            }
+            ctx.out.writeln(id + " = None");
+            return "";
+        }
+        // ---------------------------------------------------------------
+
+        String target = id;
+        if (classMember) target = "self." + target;
+
+        if (type != null && ctx.syms.hasClass(type)) {
+            String args = "";
+            if (expression != null) {
+                String init = expression.toPython(0);
+                args = (init == null ? "" : init.strip());
+            }
+            ctx.out.writeln(target + " = " + type + "(" + args + ")");
+            return "";
+        }
+
+        if (type != null && type.contains("vector")) {
+            String contents = "";
+            if (expression != null) {
+                String s = expression.toPython(0);
+                if (s != null) contents = s.strip();
+            }
+            ctx.out.writeln(target + " = [" + contents + "]");
+            return "";
+        }
+
+        if (expression != null) {
+            String rhs = expression.toPython(indent);
+            ctx.out.writeln(target + " = " + (rhs == null ? "" : rhs.strip()));
+        } else {
+            ctx.out.writeln(target + " = None");
+        }
+        return "";
+    }
+    @Override
+    public void collectImports(CodegenContext ctx) {
+        if (expression != null) expression.collectImports(ctx);
+    }
+
+    @Override
+    public void discover(CodegenContext ctx) {
+        if (expression != null) expression.discover(ctx);
     }
 }

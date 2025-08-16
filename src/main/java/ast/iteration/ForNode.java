@@ -4,6 +4,7 @@ import ast.ASTNode;
 import ast.ExpressionNode;
 import ast.LiteralNode;
 import ast.VariableDeclarationNode;
+import ast.codegen.CodegenContext;
 
 public class ForNode extends IterationNode {
 
@@ -50,6 +51,11 @@ public class ForNode extends IterationNode {
 
 
     @Override
+    protected String nodeLabel() {
+        return "";
+    }
+
+    @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("ForNode [initialStatement=" + initialStatement + ", condition=" + condition + ", expression=" + expression);
@@ -83,5 +89,10 @@ public class ForNode extends IterationNode {
         }
 
         return sb.toString();
+    }
+
+    @Override
+    public String toPython(int indent, CodegenContext ctx) {
+        return "";
     }
 }

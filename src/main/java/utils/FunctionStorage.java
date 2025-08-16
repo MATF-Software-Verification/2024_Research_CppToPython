@@ -20,4 +20,7 @@ public class FunctionStorage {
     public boolean hasFunction(String functionName) {
         return functions.contains(functionName);
     }
+    public List<String> getFunctions() {
+        return functions;
+    }
 }

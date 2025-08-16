@@ -2,6 +2,7 @@ package ast.iteration;
 
 import ast.ASTNode;
 import ast.ExpressionNode;
+import ast.codegen.CodegenContext;
 
 public class ForRangeNode extends IterationNode{
 
@@ -36,12 +37,22 @@ public class ForRangeNode extends IterationNode{
 
 
     @Override
+    protected String nodeLabel() {
+        return "";
+    }
+
+    @Override
     public String toString() {
         return "";
     }
 
     @Override
     public String toPython(int indent) {
+        return "";
+    }
+
+    @Override
+    public String toPython(int indent, CodegenContext ctx) {
         return "";
     }
 }

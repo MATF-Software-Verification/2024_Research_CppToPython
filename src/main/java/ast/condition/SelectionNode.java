@@ -5,6 +5,7 @@ import ast.ASTNode;
 import ast.CaseNode;
 import ast.CompoundNode;
 import ast.ExpressionNode;
+import ast.codegen.CodegenContext;
 
 import java.util.ArrayList;
 
@@ -70,6 +71,11 @@ public class SelectionNode extends ASTNode {
     }
 
     @Override
+    protected String nodeLabel() {
+        return "";
+    }
+
+    @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("SelectionNode[ type = ");
@@ -132,5 +138,10 @@ public class SelectionNode extends ASTNode {
         }
 
         return sb.toString();
+    }
+
+    @Override
+    public String toPython(int indent, CodegenContext ctx) {
+        return "";
     }
 }
