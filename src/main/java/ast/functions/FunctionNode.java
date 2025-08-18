@@ -51,7 +51,13 @@ public class FunctionNode extends ASTNode {
     }
 
     public void setBody(CompoundNode body) {
-        this.body = body;
+        if (this.body == null)
+            this.body = body;
+        else{
+            for (var stmt : body.getStatements()){
+                this.body.add(stmt);
+            }
+        }
     }
 
     public boolean isInClass() {

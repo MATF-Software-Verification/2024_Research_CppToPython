@@ -159,6 +159,11 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
      */
     public ASTNode visitFunctionBody(CPP14Parser.FunctionBodyContext ctx, FunctionNode functionNode) {
 
+        if (ctx.compoundStatement() != null) {
+            CompoundNode cn = visitCompoundStatement(ctx.compoundStatement());
+            functionNode.setBody(cn);
+        }
+
         if (ctx.constructorInitializer() != null) {
             var memList = ctx.constructorInitializer().memInitializerList();
             CompoundNode cn = new CompoundNode();
@@ -178,10 +183,7 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
             functionNode.setBody(cn);
         }
 
-        if (ctx.compoundStatement() != null) {
-            CompoundNode cn = visitCompoundStatement(ctx.compoundStatement());
-            functionNode.setBody(cn);
-        }
+
         //TODO: look at functionTryBlock
 
         return functionNode;
