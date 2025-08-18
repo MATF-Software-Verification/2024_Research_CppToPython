@@ -126,6 +126,10 @@ public class ExpressionNode extends ASTNode {
                         return conv;
                     }
 
+                    case "LambdaExpression": {
+                        return "lambda " + value + ":" + children.getFirst().toPython(0);
+                    }
+
                     case "PrefixExpression":
                         return value == null ? "" : value;
 
@@ -160,6 +164,9 @@ public class ExpressionNode extends ASTNode {
                     return String.join(" ", parts);
                 }
 
+                case "LambdaExpression": {
+                    return "lambda " + value + ": " + children.getFirst().toPython(0);
+                }
                 case "AdditiveExpression": {
                     String op = mapAssignmentOperator(operator);
                     return joinWith(children, op, prec("AdditiveExpression"));

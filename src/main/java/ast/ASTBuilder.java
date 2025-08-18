@@ -7,6 +7,7 @@ import ast.functions.FunctionNode;
 import ast.iteration.ForNode;
 import ast.iteration.ForRangeNode;
 import ast.iteration.WhileNode;
+import org.antlr.v4.codegen.model.decl.Decl;
 import utils.ClassStorage;
 import utils.ConvertFunctionCall;
 import utils.ConvertOperator;
@@ -16,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.BiConsumer;
+import java.util.stream.Collectors;
 
 public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
     @Override
@@ -898,9 +900,30 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
     private void visitPrimaryExpression(CPP14Parser.PrimaryExpressionContext ctx, ExpressionNode expression) {
         //TODO: This, lambdaExpression
         expression.setType("PrimaryExpression");
-        if(ctx!= null) {
+        if (ctx.lambdaExpression() != null) {
+            expression.setType("LambdaExpression");
+            visitLambdaExpression(ctx.lambdaExpression(), expression);
+        }
+        else {
             expression.setValue(ctx.getText());
         }
+    }
+
+    private void visitLambdaExpression(CPP14Parser.LambdaExpressionContext ctx, ExpressionNode expression) {
+
+        if (ctx.lambdaDeclarator() != null) {
+            DeclaratorNode decl = new DeclaratorNode();
+            visitParameterDeclarationClause(ctx.lambdaDeclarator().parameterDeclarationClause(), decl);
+            expression.setValue(
+                    decl.getParameters().stream()
+                            .map(VariableDeclarationNode::getNameOut)
+                            .collect(Collectors.joining(","))
+            );
+        }
+
+        TermNode term = (TermNode) visitCompoundStatement(ctx.compoundStatement()).getStatements().getFirst();
+
+        expression.addChild(term.getExpression());
     }
 }
 
