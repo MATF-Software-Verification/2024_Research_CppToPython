@@ -193,7 +193,7 @@ public class VariableDeclarationNode extends ASTNode {
             return "";
         }
 
-        if (type != null && type.contains("vector")) {
+        if (type != null && (type.contains("vector") || type.contains("array"))) {
             String contents = "";
             if (expression != null) {
                 String s = expression.toPython(0);

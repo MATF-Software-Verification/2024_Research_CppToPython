@@ -5,6 +5,7 @@ import utils.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class ExpressionNode extends ASTNode {
@@ -25,7 +26,7 @@ public class ExpressionNode extends ASTNode {
     public List<ASTNode> getChildren() { return children; }
     public String getType() { return type; }
     public String getOperator() {return operator; }
-    public String getValue() { return value; }
+    public String getValue() { return normalizePrimary(value); }
     public void setValue(String value) { this.value = value; }
     public void setType(String type) { this.type = type; }
     public void setOperator(String operator) { this.operator = operator; }
@@ -65,7 +66,7 @@ public class ExpressionNode extends ASTNode {
             case "LogicalAndExpression"     -> 15;  // &&
             case "LogicalOrExpression"      -> 10;  // ||
             case "AssignmentExpression"     -> 0;
-            default                         -> 100;
+            default                         -> 101;
         };
     }
     private static String exprString(ASTNode node, int parentPrec) {
@@ -286,13 +287,11 @@ public class ExpressionNode extends ASTNode {
 
     private static String mapAssignmentOperator(String op) {
         if (op == null) return "=";
-        switch (op) {
-            case "=":   case "+=": case "-=": case "*=": case "/=": case "%=":
-            case "<<=": case ">>=": case "&=": case "^=": case "|=":
-                return op;
-            default:
-                return op;
-        }
+        return switch (op) {
+            case "/" -> "//";
+            case "=", "+=", "-=", "*=", "/=", "%=", "<<=", ">>=", "&=", "^=", "|=" -> op;
+            default -> op;
+        };
     }
     private String renderLeaf() {
         if (!children.isEmpty()) return null;
@@ -303,7 +302,15 @@ public class ExpressionNode extends ASTNode {
 
         switch (type) {
             case "PrimaryExpression":
-                return normalizePrimary(value);
+                String v = normalizePrimary(value);
+                if (this.operator == null)
+                    return v;
+                return switch (this.operator) {
+                    case "-" -> "-" + v;
+                    case "++" -> v + " += 1";
+                    case "--" -> v + " -= 1";
+                    default -> v;
+                };
 
             case "LIST":
             case "LIST_IDX":

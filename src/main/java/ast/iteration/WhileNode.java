@@ -24,7 +24,21 @@ public class WhileNode  extends  IterationNode {
 
     @Override
     protected String nodeLabel() {
-        return "";
+        ExpressionNode cond = (ExpressionNode) condition;
+        String c = cond.getValue();
+        return "While(" + c + ")";
+    }
+
+    @Override
+    public String toTree(int indent) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(line(indent, nodeLabel()));
+        if (body != null) {
+            sb.append(body.toTree(indent + 1));
+        } else {
+            sb.append(line(indent + 1, "(no body)"));
+        }
+        return sb.toString();
     }
 
     @Override
@@ -60,6 +74,8 @@ public class WhileNode  extends  IterationNode {
 
     @Override
     public String toPython(int indent, CodegenContext ctx) {
+        String s = toPython(indent);
+        if (s != null && !s.isEmpty()) ctx.out.writeln(s);
         return "";
     }
 }

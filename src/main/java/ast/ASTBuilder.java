@@ -107,16 +107,20 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
 
     public void visitNoPointerDeclarator(CPP14Parser.NoPointerDeclaratorContext ctx, DeclaratorNode decl) {
 
+        if (ctx.declaratorid() != null) {
+            decl.setDeclaratorId(ctx.declaratorid().getText());
+        }
+
         if (ctx.noPointerDeclarator() != null) {
+
             visitNoPointerDeclarator(ctx.noPointerDeclarator(), decl);
+            if (ctx.LeftBracket() != null) {
+                decl.setDeclaratorId(decl.getDeclaratorId() + "[]");
+            }
         }
 
         if (ctx.parametersAndQualifiers() != null) {
             visitParametersAndQualifiers(ctx.parametersAndQualifiers(), decl);
-        }
-
-        if (ctx.declaratorid() != null) {
-            decl.setDeclaratorId(ctx.declaratorid().getText());
         }
 
     }
@@ -258,7 +262,10 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
         var type = ctx.children.getFirst().getText();
         if (type.equals("for")) {
             ForNode forNode = new ForNode();
+            ForRangeNode forRangeNode = new ForRangeNode();
+
             if(ctx.forInitStatement() != null) {
+                // Basic for
                 visitForInitStatement(ctx.forInitStatement(), forNode);
                 if(ctx.condition() != null) {
                     visitCondition(ctx.condition(),forNode);
@@ -270,11 +277,13 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
                 forNode.setBody(visitStatement(ctx.statement()));
 
             }else{
-                ForRangeNode forRangeNode = new ForRangeNode();
-                visitForRangeDeclaration(ctx.forRangeDeclaration(), forNode);
+                // for-each
+                visitForRangeDeclaration(ctx.forRangeDeclaration(), forRangeNode);
                 visitForRangeInitializer(ctx.forRangeInitializer(), forRangeNode);
+                forRangeNode.setBody(visitStatement(ctx.statement()));
             }
-            return forNode;
+
+            return forNode.getCondition() != null ? forNode : forRangeNode;
         }
         if(type.equals("while")) {
             WhileNode whileNode = new WhileNode();
@@ -302,12 +311,17 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
     }
 
 
-    private void visitForRangeDeclaration(CPP14Parser.ForRangeDeclarationContext ctx, ForNode forNode) {
-        //TODO change this
-        // iterationNode.setRangeDeclaration(new ExpressionNode(ctx.getText()));
+    private void visitForRangeDeclaration(CPP14Parser.ForRangeDeclarationContext ctx, ForRangeNode forNode) {
+        DeclaratorNode decl = new DeclaratorNode();
+        visitDeclarator(ctx.declarator(), decl);
+        VariableDeclarationNode var = new VariableDeclarationNode();
+        var.setName(decl);
+        visitDeclSpecifierSeq(ctx.declSpecifierSeq(), var);
+
+        forNode.setRangeDeclaration(var);
+
     }
     private void visitForRangeInitializer(CPP14Parser.ForRangeInitializerContext ctx, ForRangeNode forNode) {
-        //TODO Fix this
         if(ctx.expression() != null) {
             ExpressionNode expr = (ExpressionNode) visitExpression(ctx.expression());
             forNode.setRangeInitializer(expr);
@@ -395,6 +409,10 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
 
                 DeclaratorNode node = new DeclaratorNode();
                 visitDeclarator(c.declarator(), node);
+                if (node.getDeclaratorId().contains("[]")){
+                    variable.setType("array");
+                    node.setDeclaratorId(node.getDeclaratorId().replace("[]", ""));
+                }
                 variable.setName(node);
                 // Checking if a variable is base type or class
                 List<String> typeList = Arrays.asList("int","string","vector","bool","float","double");
@@ -771,6 +789,18 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
         }
 
         if(ctx.unaryExpression() != null){
+            if(ctx.PlusPlus() != null){
+                expression.setOperator(ctx.PlusPlus().getText());
+                expression.setType("prefixIncrement");
+            }
+            else if (ctx.MinusMinus() != null){
+                expression.setOperator(ctx.MinusMinus().getText());
+                expression.setType("prefixDecrement");
+            }
+            else if (ctx.unaryOperator() != null){
+                expression.setOperator(ctx.unaryOperator().getText());
+                expression.setType("unaryOperator");
+            }
             expression.setValue(ctx.unaryExpression().getText());
             visitUnaryExpression(ctx.unaryExpression(), expression);
         }
@@ -779,15 +809,7 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
             visitNewExpression_(ctx.newExpression_(),expression);
         }
 
-        if(ctx.PlusPlus() != null){
-            expression.setOperator(ctx.PlusPlus().getText());
-            expression.setType("prefixIncrement");
-        }
 
-        if (ctx.MinusMinus() != null){
-            expression.setOperator(ctx.MinusMinus().getText());
-            expression.setType("prefixDecrement");
-        }
     }
     private void visitNewExpression_(CPP14Parser.NewExpression_Context ctx, ExpressionNode expression) {
 

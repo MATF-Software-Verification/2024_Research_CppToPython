@@ -72,7 +72,9 @@ public class SelectionNode extends ASTNode {
 
     @Override
     protected String nodeLabel() {
-        return "";
+        String t = type == null ? "" : type;
+        String c = condition == null ? "" : condition.getValue();
+        return "Condition(" + t + c + ")";
     }
 
     @Override
@@ -101,7 +103,7 @@ public class SelectionNode extends ASTNode {
         if(type != null && type.equals("if") && condition != null && thenBranch != null ) {
             line.append(this.type).append(" ");
             line.append(this.condition.toPython(indent)).append(":");
-            sb.append(line.toString()).append('\n');
+            sb.append(line).append('\n');
             if(thenBranch instanceof CompoundNode) {
                 sb.append(this.thenBranch.toPython(indent+1));
             }else{
@@ -114,7 +116,7 @@ public class SelectionNode extends ASTNode {
         }else if(type != null && type.equals("elseif") && thenBranch != null && elseBranch != null && condition != null) {
             line.append("elif ");
             line.append(this.condition.toPython(indent)).append(":");
-            sb.append(line.toString()).append('\n');
+            sb.append(line).append('\n');
 //            sb.append(this.thenBranch.toPython(indent+1));
             if(thenBranch instanceof CompoundNode) {
                 sb.append(this.thenBranch.toPython(indent+1));
@@ -128,7 +130,7 @@ public class SelectionNode extends ASTNode {
         if(type!= null && type.equals("else") && thenBranch != null){
             line.append(this.type);
             line.append(":");
-            sb.append(line.toString()).append('\n');
+            sb.append(line).append('\n');
 //            sb.append(this.thenBranch.toPython(indent+1));
             if(thenBranch instanceof CompoundNode) {
                 sb.append(this.thenBranch.toPython(indent+1));
@@ -142,6 +144,8 @@ public class SelectionNode extends ASTNode {
 
     @Override
     public String toPython(int indent, CodegenContext ctx) {
+        String s = toPython(indent);
+        if (s != null && !s.isEmpty()) ctx.out.writeln(s);
         return "";
     }
 }

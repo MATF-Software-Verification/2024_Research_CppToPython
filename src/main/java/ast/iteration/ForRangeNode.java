@@ -2,6 +2,7 @@ package ast.iteration;
 
 import ast.ASTNode;
 import ast.ExpressionNode;
+import ast.VariableDeclarationNode;
 import ast.codegen.CodegenContext;
 
 public class ForRangeNode extends IterationNode{
@@ -38,9 +39,22 @@ public class ForRangeNode extends IterationNode{
 
     @Override
     protected String nodeLabel() {
-        return "";
+        VariableDeclarationNode declaration = (VariableDeclarationNode) rangeDeclaration;
+        ExpressionNode initializer = (ExpressionNode) rangeInitializer;
+        return "ForRange(" + declaration.getNameOut() + ":" + initializer.getValue() + ")";
     }
 
+    @Override
+    public String toTree(int indent) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(line(indent, nodeLabel()));
+        if (body != null){
+            sb.append(body.toTree(indent + 1));
+        }
+        return sb.toString();
+    }
+
+    @Deprecated
     @Override
     public String toString() {
         return "";
@@ -48,11 +62,27 @@ public class ForRangeNode extends IterationNode{
 
     @Override
     public String toPython(int indent) {
-        return "";
+        StringBuilder sb = new StringBuilder();
+        StringBuilder line = new StringBuilder();
+
+        if (rangeDeclaration != null){
+            line.append("for ");
+            line.append(((VariableDeclarationNode)rangeDeclaration).getNameOut());
+            line.append(" in ");
+            line.append(((ExpressionNode)rangeInitializer).getValue());
+            line.append(":");
+        }
+        sb.append(getIndentedPythonCode(indent-1,line.toString()));
+        if (body != null) {
+            sb.append(body.toPython(indent+1));
+        }
+        return sb.toString();
     }
 
     @Override
     public String toPython(int indent, CodegenContext ctx) {
+        String s = toPython(indent);
+        if (s != null && !s.isEmpty()) ctx.out.writeln(s);
         return "";
     }
 }
