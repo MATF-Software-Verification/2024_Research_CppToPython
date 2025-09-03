@@ -3,7 +3,9 @@ package ast;
 import ast.codegen.CodegenContext;
 import utils.ClassStorage;
 import utils.FunctionStorage;
+import utils.TypeMapper;
 
+import java.util.Objects;
 
 public class VariableDeclarationNode extends ASTNode {
 
@@ -199,13 +201,18 @@ public class VariableDeclarationNode extends ASTNode {
                 String s = expression.toPython(0);
                 if (s != null) contents = s.strip();
             }
-            ctx.out.writeln(target + " = [" + contents + "]");
+            String typing = TypeMapper.mapCppTypeToPython(type);
+            ctx.out.writeln(target + (!Objects.equals(typing, "unknown") ? ": " + typing : "") + " = [" + contents + "]");
             return "";
         }
 
         if (expression != null) {
             String rhs = expression.toPython(indent);
-            ctx.out.writeln(target + " = " + (rhs == null ? "" : rhs.strip()));
+            String typing = null;
+            if (type != null) {
+                typing = TypeMapper.mapCppTypeToPython(type);
+            }
+            ctx.out.writeln(target + (!Objects.equals(typing, "unknown") ? ": " + typing : "") + " = " + (rhs == null ? "" : rhs.strip()));
         } else {
             ctx.out.writeln(target + " = None");
         }

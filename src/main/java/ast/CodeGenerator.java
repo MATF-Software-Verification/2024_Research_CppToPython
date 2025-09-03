@@ -16,7 +16,7 @@ public class CodeGenerator {
         tu.discover(ctx);
         tu.collectImports(ctx);
         ctx.out.write(ctx.emitImports());
-
+        ctx.out.write("import typing\n\n");
         tu.toPython(0, ctx);
 
         if (options.emitEntryPoint && ctx.meta.hasMain) {
