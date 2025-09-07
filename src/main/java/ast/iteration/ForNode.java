@@ -6,9 +6,11 @@ import ast.LiteralNode;
 import ast.VariableDeclarationNode;
 import ast.codegen.CodegenContext;
 
+import java.util.List;
+import java.util.Objects;
+
 public class ForNode extends IterationNode {
 
-    //first Type
     private ASTNode initialStatement;
     private ASTNode condition;
     private ASTNode expression;
@@ -17,13 +19,11 @@ public class ForNode extends IterationNode {
         super();
     }
 
-    //First Type
     public ForNode(ASTNode initialStatement, ASTNode condition, ASTNode expression) {
         this.initialStatement = initialStatement;
         this.condition = condition;
         this.expression = expression;
     }
-
 
     public ASTNode getInitialStatement() {
         return initialStatement;
@@ -50,6 +50,10 @@ public class ForNode extends IterationNode {
     }
 
 
+    private static String expr(ASTNode n, CodegenContext ctx) {
+        if (n instanceof ExpressionNode en) return en.emitExpr(ctx).code;
+        return n == null ? "" : n.toPython(0);
+    }
     @Override
     protected String nodeLabel() {
         ExpressionNode cond = (ExpressionNode) condition;
@@ -66,17 +70,6 @@ public class ForNode extends IterationNode {
         } else {
             sb.append(line(indent + 1, "(no body)"));
         }
-        return sb.toString();
-    }
-
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("ForNode [initialStatement=" + initialStatement + ", condition=" + condition + ", expression=" + expression);
-        sb.append(" body= ");
-        sb.append(body.toString());
-
-        sb.append("\n");
         return sb.toString();
     }
 
@@ -107,8 +100,68 @@ public class ForNode extends IterationNode {
 
     @Override
     public String toPython(int indent, CodegenContext ctx) {
-        String s = toPython(indent);
-        if (s != null && !s.isEmpty()) ctx.out.writeln(s);
+        String var   = "i";
+        String start = "0";
+        String end   = "0";
+        String step  = "1";
+        if (initialStatement instanceof VariableDeclarationNode v) {
+            var = v.getNameOut();
+            if (v.getExpression() != null) start = expr(v.getExpression(), ctx);
+        } else {
+            ctx.out.writeln("# unsupported for-init");
+            ctx.out.writeln("pass");
+            return "";
+        }
+
+        if (condition instanceof ExpressionNode ce) {
+            String op = ce.getOperator();
+            var kids = ce.getChildren();
+            if (kids != null && kids.size() >= 2) {
+                String lhs = expr(kids.get(0), ctx);
+                String rhs = expr(kids.get(1), ctx);
+                if (lhs.equals(var)) {
+                    if ("<".equals(op))       end = rhs;
+                    else if ("<=".equals(op)) end = "(" + rhs + " + 1)";
+                    else {
+                        ctx.out.writeln("pass");
+                        return "";
+                    }
+                } else {
+                    ctx.out.writeln("pass");
+                    return "";
+                }
+            } else {
+                ctx.out.writeln("pass");
+                return "";
+            }
+        } else {
+            ctx.out.writeln("pass");
+            return "";
+        }
+
+        if (expression instanceof ExpressionNode ue) {
+            String uop = ue.getOperator();
+            var kids = ue.getChildren();
+            if ("++".equals(uop)) {
+                step = "1";
+            } else if ("+=".equals(uop) && kids != null && kids.size() >= 2) {
+                step = expr(kids.get(1), ctx);
+            } else {
+                ctx.out.writeln("pass");
+                return "";
+            }
+        } else {
+            ctx.out.writeln("pass");
+            return "";
+        }
+
+        String rangeArgs = start + ", " + end + ( "1".equals(step) ? "" : ", " + step );
+        ctx.out.writeln("for " + var + " in range(" + rangeArgs + "):");
+        ctx.out.indent();
+        if (body != null) body.toPython(0, ctx);
+        else ctx.out.writeln("pass");
+        ctx.out.dedent();
         return "";
     }
+
 }

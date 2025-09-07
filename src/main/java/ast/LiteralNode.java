@@ -6,10 +6,6 @@ public class LiteralNode extends ASTNode {
 
     private String value;
 
-
-    public LiteralNode(String value) {
-        this.value = value;
-    }
     public LiteralNode() {}
 
 

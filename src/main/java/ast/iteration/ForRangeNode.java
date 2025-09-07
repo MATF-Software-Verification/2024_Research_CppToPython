@@ -11,31 +11,14 @@ public class ForRangeNode extends IterationNode{
     private ASTNode rangeInitializer;
 
     public ForRangeNode() {}
-    public ForRangeNode(ASTNode rangeDeclaration, ASTNode rangeInitializer){
-        super();
-        this.rangeDeclaration = rangeDeclaration;
-        this.rangeInitializer = rangeInitializer;
-    }
-    public ASTNode getRangeDeclaration() {
-        return rangeDeclaration;
-    }
 
     public void setRangeDeclaration(ASTNode rangeDeclaration) {
         this.rangeDeclaration = rangeDeclaration;
     }
 
-    public ASTNode getRangeInitializer() {
-        return rangeInitializer;
-    }
-
     public void setRangeInitializer(ExpressionNode rangeInitializer) {
         this.rangeInitializer = rangeInitializer;
     }
-
-    public void setRangeInitializer(ASTNode rangeInitializer) {
-        this.rangeInitializer = rangeInitializer;
-    }
-
 
     @Override
     protected String nodeLabel() {
@@ -54,35 +37,24 @@ public class ForRangeNode extends IterationNode{
         return sb.toString();
     }
 
-    @Deprecated
-    @Override
-    public String toString() {
-        return "";
-    }
-
-    @Override
-    public String toPython(int indent) {
-        StringBuilder sb = new StringBuilder();
-        StringBuilder line = new StringBuilder();
-
-        if (rangeDeclaration != null){
-            line.append("for ");
-            line.append(((VariableDeclarationNode)rangeDeclaration).getNameOut());
-            line.append(" in ");
-            line.append(((ExpressionNode)rangeInitializer).getValue());
-            line.append(":");
-        }
-        sb.append(getIndentedPythonCode(indent-1,line.toString()));
-        if (body != null) {
-            sb.append(body.toPython(indent+1));
-        }
-        return sb.toString();
-    }
-
     @Override
     public String toPython(int indent, CodegenContext ctx) {
-        String s = toPython(indent);
-        if (s != null && !s.isEmpty()) ctx.out.writeln(s);
+
+        String var = (rangeDeclaration instanceof VariableDeclarationNode v)
+                ? v.getNameOut()
+                : "_";
+
+        String iter = (rangeInitializer == null) ? "[]" : rangeInitializer.toPython(0);
+        if (iter == null || iter.isBlank()) iter = "[]";
+
+        ctx.out.writeln("for " + var + " in " + iter + ":");
+        ctx.out.indent();
+        if (body != null) {
+            body.toPython(0, ctx);
+        } else {
+            ctx.out.writeln("pass");
+        }
+        ctx.out.dedent();
         return "";
     }
 }

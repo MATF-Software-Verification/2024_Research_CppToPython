@@ -12,8 +12,8 @@ int main() {
     std::cout << "Square: " << square(5) << std::endl;
 
     // Explicit type construction
-//    std::string t{"world"};
-//    std::cout << s << " " << t << std::endl;
+    std::string t{"world"};
+    std::cout  << t << std::endl;
 
     // Post-increment and post-decrement
     int x = 10;

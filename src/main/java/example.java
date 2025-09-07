@@ -2,13 +2,12 @@ import antlr.CPP14Lexer;
 import antlr.CPP14Parser;
 import ast.ASTBuilder;
 import ast.ASTNode;
-import ast.CodeGenerator;
+import ast.codegen.CodeGenerator;
 import ast.TranslationUnitNode;
 import ast.codegen.CodegenOptions;
 import org.antlr.v4.gui.TreeViewer;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.*;
-import utils.FunctionStorage;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -18,7 +17,7 @@ public class example {
 
     public static void main(String[] args) throws IOException {
 
-        CharStream charStream = CharStreams.fromFileName("src/main/tests/input/while.cpp");
+        CharStream charStream = CharStreams.fromFileName("src/main/tests/input/simpleDeclaration.cpp");
 
         CPP14Lexer lexer = new CPP14Lexer(charStream);
         CommonTokenStream tokens = new CommonTokenStream(lexer);

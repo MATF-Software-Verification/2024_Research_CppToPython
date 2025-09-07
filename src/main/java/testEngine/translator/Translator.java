@@ -1,7 +1,7 @@
 package testEngine.translator;
 
 import ast.ASTNode;
-import ast.CodeGenerator;
+import ast.codegen.CodeGenerator;
 import ast.TranslationUnitNode;
 import ast.codegen.CodegenOptions;
 

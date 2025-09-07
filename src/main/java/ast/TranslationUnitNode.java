@@ -24,25 +24,12 @@ public class TranslationUnitNode extends ASTNode {
     @Override
     public String toTree(int indent) {
         StringBuilder sb = new StringBuilder();
-        sb.append(line(indent,nodeLable()));
+        sb.append(line(indent,nodeLabel()));
         for (ASTNode declaration : declarations) {
             sb.append(declaration.toTree(indent+1));
         }
         return sb.toString();
     }
-
-    @Deprecated
-    @Override
-    public  String toPython(int indent) {
-        StringBuilder sb = new StringBuilder();
-        for (ASTNode declaration : declarations) {
-            sb.append(declaration.toPython(indent));
-        }
-
-        sb.append("if __name__ == \"__main__\":\n\tmain()");
-        return sb.toString();
-    }
-
 
     @Override
     public String toPython(int indent, CodegenContext ctx) {
@@ -65,8 +52,5 @@ public class TranslationUnitNode extends ASTNode {
             d.discover(ctx);
         }
     }
-    @Override
-    public void collectImports(CodegenContext ctx) {
-        for (ASTNode d : declarations) d.collectImports(ctx);
-    }
+
 }
