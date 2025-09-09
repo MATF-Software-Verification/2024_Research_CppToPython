@@ -34,12 +34,8 @@ public class example {
                 .withBlankLineBetweenDecls(true);
 
         String python = new CodeGenerator(opts).generate((TranslationUnitNode) root);
-        System.out.println("=================== NEW PYTHON =======================");
+        System.out.println("=================== PYTHON =======================");
         System.out.println(python);
-//        System.out.println("==================== LAST PYTON =======================");
-//        System.out.println("============= Python End ===========");
-//        String endString = root.toPython(  0);
-//        System.out.println(endString);
         System.out.println("=====================================");
         JFrame frame = new JFrame("ANTLR");
         TreeViewer viewer = new TreeViewer(Arrays.asList(parser.getRuleNames()), tree);
@@ -49,9 +45,6 @@ public class example {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(800, 600);
         frame.setVisible(true);
-
-
-        System.out.println(tree.toStringTree(parser));
     }
 
 }
