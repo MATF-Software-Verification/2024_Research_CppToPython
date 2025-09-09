@@ -40,4 +40,4 @@ To run on individual file:
 ####  Steps:
 1. Add correct .cpp file in **tests/input**
 2. In **example.java** modify line ```CharStream charStream = CharStreams.fromFileName("src/main/tests/input/example.cpp");```
-3. Run **example.java**
+3. Run ``` ./gradlew example ```
