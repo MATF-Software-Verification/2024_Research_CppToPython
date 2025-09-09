@@ -1,9 +1,13 @@
 package ast;
 
 import ast.codegen.CodegenContext;
+import utils.ClassStorage;
+import utils.FunctionStorage;
+import utils.TypeMapper;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class VariableDeclarationNode extends ASTNode {
 
@@ -155,7 +159,8 @@ public class VariableDeclarationNode extends ASTNode {
             if (expression != null) {
                 contents = argsFromExpr(expression, ctx).strip();
             }
-            ctx.out.writeln(target + " = [" + contents + "]");
+            String typing = TypeMapper.mapCppTypeToPython(type);
+            ctx.out.writeln(target + (!Objects.equals(typing, "unknown") ? ": " + typing : "") + " = [" + contents + "]");
             return "";
         }
 
@@ -173,7 +178,11 @@ public class VariableDeclarationNode extends ASTNode {
                 String s = expression.toPython(0);
                 rhs = (s == null ? "" : s.strip());
             }
-            ctx.out.writeln(target + " = " + rhs);
+            String typing = "unknown";
+            if (type != null) {
+                typing = TypeMapper.mapCppTypeToPython(type);
+            }
+            ctx.out.writeln(target + (!Objects.equals(typing, "unknown") ? ": " + typing : "") + " = " + (rhs == null ? "" : rhs.strip()));
         } else {
             ctx.out.writeln(target + " = None");
         }
@@ -199,8 +208,8 @@ public class VariableDeclarationNode extends ASTNode {
         if ("InitializerList".equals(typ) || "LIST".equals(typ)) {
             List<String> parts = new ArrayList<>();
             if (en.getChildren() != null) {
-                for (ast.ASTNode ch : en.getChildren()) {
-                    if (ch instanceof ast.ExpressionNode ce) {
+                for (ASTNode ch : en.getChildren()) {
+                    if (ch instanceof ExpressionNode ce) {
                         parts.add(ce.emitExpr(ctx).code);
                     } else {
                         parts.add(ch.toPython(0));
@@ -210,14 +219,14 @@ public class VariableDeclarationNode extends ASTNode {
             return String.join(", ", parts);
         }
         if (en.getChildren() != null) {
-            for (ast.ASTNode ch : en.getChildren()) {
-                if (ch instanceof ast.ExpressionNode childEn) {
+            for (ASTNode ch : en.getChildren()) {
+                if (ch instanceof ExpressionNode childEn) {
                     String ctyp = childEn.getType();
                     if ("InitializerList".equals(ctyp) || "LIST".equals(ctyp)) {
                         List<String> parts = new ArrayList<>();
                         if (childEn.getChildren() != null) {
-                            for (ast.ASTNode gch : childEn.getChildren()) {
-                                if (gch instanceof ast.ExpressionNode gce) {
+                            for (ASTNode gch : childEn.getChildren()) {
+                                if (gch instanceof ExpressionNode gce) {
                                     parts.add(gce.emitExpr(ctx).code);
                                 } else {
                                     parts.add(gch.toPython(0));

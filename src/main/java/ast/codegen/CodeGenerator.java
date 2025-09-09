@@ -13,6 +13,7 @@ public class CodeGenerator {
         CodegenContext ctx = new CodegenContext(options);
 
         tu.discover(ctx);
+        ctx.out.writeln("import typing\n");
 
         tu.toPython(0, ctx);
 

@@ -27,8 +27,14 @@ public class TypeMapper {
 
     public static String mapCppTypeToPython(String cppType) {
         for (String prefix : typeMap.keySet()) {
-            if (cppType.equals(prefix) || cppType.startsWith(prefix + "<")) {
+            if (cppType.equals(prefix)) {
                 return typeMap.get(prefix);
+            }
+            else if (cppType.contains("<")) {
+                int start = cppType.indexOf("<") + 1;
+                int end = cppType.lastIndexOf(">");
+                String generic = cppType.substring(start, end);
+                return typeMap.get(prefix) + "[" + typeMap.get(generic) + "]";
             }
         }
         return "unknown";

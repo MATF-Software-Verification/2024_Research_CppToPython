@@ -5,8 +5,11 @@ import ast.CompoundNode;
 import ast.DeclaratorNode;
 import ast.VariableDeclarationNode;
 import ast.codegen.CodegenContext;
+import utils.ClassStorage;
+import utils.TypeMapper;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class FunctionNode extends ASTNode {
@@ -96,7 +99,9 @@ public class FunctionNode extends ASTNode {
         String pyName = (isConstructor || "__init__".equals(cppName)) ? "__init__" : cppName;
         if (pyName == null || pyName.isBlank()) pyName = "fn";
 
-        String signature = "def " + pyName + "(" + buildParamListPython() + "):";
+        String retVal = TypeMapper.mapCppTypeToPython(return_value);
+        String typing = (!Objects.equals(retVal, "unknown") ? " -> " + retVal : "");
+        String signature = "def " + pyName + "(" + buildParamListPython() + ")" + (!Objects.equals(pyName, "__init__") ? typing : "") + ":";
         ctx.out.writeln(signature);
         ctx.out.indent();
         ctx.enterScope();
