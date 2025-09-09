@@ -178,7 +178,7 @@ public class VariableDeclarationNode extends ASTNode {
                 String s = expression.toPython(0);
                 rhs = (s == null ? "" : s.strip());
             }
-            String typing = null;
+            String typing = "unknown";
             if (type != null) {
                 typing = TypeMapper.mapCppTypeToPython(type);
             }
@@ -208,8 +208,8 @@ public class VariableDeclarationNode extends ASTNode {
         if ("InitializerList".equals(typ) || "LIST".equals(typ)) {
             List<String> parts = new ArrayList<>();
             if (en.getChildren() != null) {
-                for (ast.ASTNode ch : en.getChildren()) {
-                    if (ch instanceof ast.ExpressionNode ce) {
+                for (ASTNode ch : en.getChildren()) {
+                    if (ch instanceof ExpressionNode ce) {
                         parts.add(ce.emitExpr(ctx).code);
                     } else {
                         parts.add(ch.toPython(0));
@@ -219,14 +219,14 @@ public class VariableDeclarationNode extends ASTNode {
             return String.join(", ", parts);
         }
         if (en.getChildren() != null) {
-            for (ast.ASTNode ch : en.getChildren()) {
-                if (ch instanceof ast.ExpressionNode childEn) {
+            for (ASTNode ch : en.getChildren()) {
+                if (ch instanceof ExpressionNode childEn) {
                     String ctyp = childEn.getType();
                     if ("InitializerList".equals(ctyp) || "LIST".equals(ctyp)) {
                         List<String> parts = new ArrayList<>();
                         if (childEn.getChildren() != null) {
-                            for (ast.ASTNode gch : childEn.getChildren()) {
-                                if (gch instanceof ast.ExpressionNode gce) {
+                            for (ASTNode gch : childEn.getChildren()) {
+                                if (gch instanceof ExpressionNode gce) {
                                     parts.add(gce.emitExpr(ctx).code);
                                 } else {
                                     parts.add(gch.toPython(0));
