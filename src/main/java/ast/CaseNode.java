@@ -1,9 +1,11 @@
 package ast;
 
+import ast.codegen.CodegenContext;
+
 public class CaseNode extends ASTNode{
 
-    private ExpressionNode condition; // the case condition (null for default)
-    private ASTNode body; // the body of the case
+    private ExpressionNode condition;
+    private ASTNode body;
 
     public CaseNode(ExpressionNode condition, ASTNode body) {
         this.condition = condition;
@@ -14,8 +16,10 @@ public class CaseNode extends ASTNode{
         return condition;
     }
 
-    public ASTNode getBody() {
-        return body;
+
+    @Override
+    protected String nodeLabel() {
+        return "";
     }
 
     @Override
@@ -32,6 +36,11 @@ public class CaseNode extends ASTNode{
 
     @Override
     public String toPython(int ident) {
+        return "";
+    }
+
+    @Override
+    public String toPython(int indent, CodegenContext ctx) {
         return "";
     }
 }

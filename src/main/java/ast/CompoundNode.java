@@ -1,63 +1,60 @@
-package ast;
+    package ast;
 
-import java.util.ArrayList;
-import java.util.List;
+    import ast.codegen.CodegenContext;
 
-public class CompoundNode extends ASTNode{
+    import java.util.ArrayList;
+    import java.util.List;
 
-    private List<ASTNode> statements;
+    public class CompoundNode extends ASTNode{
 
-    public CompoundNode() {
-        this.statements = new ArrayList<ASTNode>();
-    }
+        private List<ASTNode> statements;
 
-    public List<ASTNode> getStatements() {
-        return statements;
-    }
-
-    public void setStatements(List<ASTNode> statements) {
-        this.statements = statements;
-    }
-
-    public void add(ASTNode statement) {
-        statements.add(statement);
-    }
-
-   // body= CompoundNode{statements=[Expression:[ operator: += ] [value: x+=i]
-    // children: [Expression: [value: x] children: [LiteralNode( x )]],
-    // Expression: [value: i] children: [LiteralNode( i )]]]],
-    // Expression:[ type : ShiftExpression ] [value: std::cout<<'Pardon'<<endl]
-    // children: [Expression: [value: std::cout] children: [LiteralNode( std::cout )]],
-    // Expression: [value: 'Pardon'] children: [LiteralNode( 'Pardon' )]],
-    // Expression: [value: endl] children: [LiteralNode( endl )]]]]]}
-    // , Expression:[ type : return ] [value: x] children: [LiteralNode( x )]]]}]}
-    //    ------------------------
-
-    @Override
-    public String toString() {
-
-        StringBuilder sb = new StringBuilder();
-        sb.append("CompoundNode{\n");
-        for (ASTNode statement : statements) {
-            sb.append(statement);
-            sb.append("\n");
-        }
-        sb.append("}");
-
-        return sb.toString();
-    }
-
-    @Override
-    public String toPython(int indent) {
-
-        StringBuilder sb = new StringBuilder();
-
-        for (ASTNode statement : statements) {
-            StringBuilder line = new StringBuilder();
-            line.append(getIndentedPythonCode(indent,statement.toPython(indent)));
-            sb.append(line);
+        public CompoundNode() {
+            this.statements = new ArrayList<ASTNode>();
         }
 
-        return sb.toString();
+        public List<ASTNode> getStatements() {
+            return statements;
+        }
+
+        public void add(ASTNode statement) {
+            statements.add(statement);
+        }
+
+        @Override
+        protected String nodeLabel() {
+            return "Compound(" + statements.size() + " stmts)";
+        }
+
+        @Override
+        public String toTree(int indent) {
+            StringBuilder sb = new StringBuilder();
+            sb.append(line(indent, nodeLabel()));
+            for (ASTNode s : statements) {
+                sb.append(s.toTree(indent + 1));
+            }
+            return sb.toString();
+        }
+
+        @Override
+        public String toPython(int indent, CodegenContext ctx) {
+            if (statements.isEmpty()) {
+                ctx.out.writeln("pass");
+                return "";
+            }
+
+            for (ASTNode s : statements) {
+                String maybe = s.toPython(indent, ctx);
+                if (maybe != null && !maybe.isEmpty()) {
+                    ctx.out.write(maybe);
+                }
+            }
+            return "";
+        }
+
+
+        @Override
+        public void discover(CodegenContext ctx) {
+            for (ASTNode s : statements) s.discover(ctx);
+        }
     }
-}

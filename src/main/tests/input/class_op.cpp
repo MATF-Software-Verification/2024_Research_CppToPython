@@ -10,12 +10,12 @@ private:
 public:
 
     Person(const std::string& name, int age) {
-        this.name = name;
-        this.age = age;
+        this->name = name;
+        this->age = age;
     }
 
     std::string getName() const {
-        return this.name;
+        return this->name;
     }
 
     void setName(const std::string& name) {
@@ -23,16 +23,16 @@ public:
     }
 
     int getAge() const {
-        return age;
+        return this->age;
     }
 
     void setAge(int newAge) {
         if (newAge >= 0) {
-            age = newAge;
+            this->age = newAge;
         }
     }
     void display(){
-        std::cout << "Name: " << name << ", age: " << age <<std::endl;
+        std::cout << "Name: " << this->name << ", age: " << this->age <<std::endl;
     }
 
 };
