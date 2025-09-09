@@ -8,7 +8,7 @@ import java.util.List;
 public class DeclaratorNode extends ASTNode{
 
     private Boolean classMember= Boolean.FALSE;
-    private String declaratorId; // name of the declared value
+    private String declaratorId;
     private String pointer;
     private ArrayList<VariableDeclarationNode> parameters;
 
@@ -18,10 +18,6 @@ public class DeclaratorNode extends ASTNode{
     public String getDeclaratorId() {
         return declaratorId;
     }
-    public Boolean getClassMember() {
-        return classMember;
-    }
-    public void setClassMember() {classMember = Boolean.TRUE;}
     public void setDeclaratorId(String declaratorId) {
         this.declaratorId = declaratorId;
     }
@@ -42,25 +38,6 @@ public class DeclaratorNode extends ASTNode{
         return parameters != null && !parameters.isEmpty();
     }
 
-    public boolean isPointerLike() {
-        return pointer != null && pointer.contains("*");
-    }
-
-    public boolean isReferenceLike() {
-        return pointer != null && (pointer.contains("&"));
-    }
-
-    public List<String> paramNamesPython() {
-        if (!hasParameters()) return List.of();
-        List<String> names = new ArrayList<>(parameters.size());
-        for (VariableDeclarationNode vd : parameters) {
-            String n = (vd.getName() != null && vd.getName().getDeclaratorId() != null)
-                    ? vd.getName().getDeclaratorId()
-                    : "_";
-            names.add(n);
-        }
-        return names;
-    }
 
     @Override
     protected String nodeLabel() {

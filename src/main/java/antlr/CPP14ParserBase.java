@@ -18,7 +18,7 @@ public abstract class CPP14ParserBase extends Parser
 	    var c2 = c.getChild(0);
 	    var p = c2.getChild(1);
 	    if (p == null) return false;
-	    return (p instanceof CPP14Parser.ParametersAndQualifiersContext);
+	    return (p instanceof antlr.CPP14Parser.ParametersAndQualifiersContext);
 	}
 	catch (Exception e)
 	{

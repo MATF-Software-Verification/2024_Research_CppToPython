@@ -7,10 +7,10 @@ public final class CodegenContext {
     public final CodeWriter out = new CodeWriter();
     public final CodegenMeta meta = new CodegenMeta();
     public final Symbols syms = new Symbols();
+    public final ChainHandlers chains = ChainHandlers.defaults();
+    public final CallRewriteRegistry rewrites = CallRewriteRegistry.pythonDefaults();
 
 
-
-    private final LinkedHashSet<String> imports = new LinkedHashSet<>();
     private final Deque<Set<String>> scopes = new ArrayDeque<>();
 
     private int tempCounter = 0;
@@ -24,34 +24,23 @@ public final class CodegenContext {
         return new CodegenContext(CodegenOptions.defaults());
     }
 
-    public void requireImport(String line) {
-        if (line != null && !line.isBlank()) imports.add(line);
-    }
-
-    public String emitImports() {
-        if (imports.isEmpty()) return "";
-        StringBuilder sb = new StringBuilder();
-        for (String i : imports) sb.append(i).append("\n");
-        sb.append("\n");
-        return sb.toString();
-    }
 
     public void enterScope() {
         scopes.push(new HashSet<>());
+        syms.enterScopeVars();
     }
 
     public void exitScope() {
         scopes.pop();
+        syms.exitScopeVars();
     }
-
     public void declare(String name) {
         scopes.peek().add(name);
     }
 
-    public boolean isDeclared(String name) {
-        return scopes.stream().anyMatch(s -> s.contains(name));
-    }
-
+    // print(i++)
+    // print(i)
+    // t_0 = i + 1
     public String freshTemp(String hint) {
         return "_" + (hint == null ? "t" : hint) + "_" + (tempCounter++);
     }

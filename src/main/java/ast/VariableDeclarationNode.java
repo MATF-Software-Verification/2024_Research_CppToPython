@@ -5,6 +5,8 @@ import utils.ClassStorage;
 import utils.FunctionStorage;
 import utils.TypeMapper;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 public class VariableDeclarationNode extends ASTNode {
@@ -67,6 +69,11 @@ public class VariableDeclarationNode extends ASTNode {
         this.expression = expression;
     }
 
+    private static boolean isVectorLike(String t) {
+        if (t == null) return false;
+        String s = t.toLowerCase();
+        return s.contains("vector") || s.contains("array");
+    }
     @Override
     protected String nodeLabel() {
         String id = getNameOut();
@@ -83,92 +90,48 @@ public class VariableDeclarationNode extends ASTNode {
         if (expression != null) sb.append(expression.toTree(indent + 1));
         return sb.toString();
     }
-    @Deprecated
+
     @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
+    public String toPython(int indent) {
+        String id = getNameOut();
+        String target = classMember ? "self." + id : id;
 
-        sb.append("VariableDeclaration{");
+        if ("class".equals(type) && expression != null) {
+            return expression.toPython(indent);
+        }
+
         if (type != null) {
-            sb.append("type: ").append(type).append(" ");
-        }
-
-        if (name != null  && name.getDeclaratorId() != null) {
-            sb.append("name: ").append(name.getDeclaratorId()).append(" ");
-        }
-
-        if ( name != null && name.getParameters() != null) {
-            sb.append("parameters: ").append(name.getParameters()).append(" ");
+            if (isVectorLike(type)) {
+                String contents = (expression == null) ? "" : expression.toPython(0);
+                contents = (contents == null) ? "" : contents.strip();
+                return target + " = [" + contents + "]";
+            }
+            String args = (expression == null) ? "" : String.valueOf(expression.toPython(0)).strip();
+            return target + " = " + type + "(" + args + ")";
         }
 
         if (expression != null) {
-            sb.append("expression: ").append(expression).append(" ");
+            String rhs = expression.toPython(indent);
+            rhs = (rhs == null) ? "" : rhs.strip();
+            return target + " = " + rhs;
         }
-
-        sb.append("}");
-        return sb.toString();
-    }
-    public String toPython(int indent) {
-        StringBuilder sb = new StringBuilder();
-        StringBuilder line = new StringBuilder();
-
-        if(type != null && type.equals("class")) {
-            sb.append(line);
-            sb.append(expression.toPython(indent));
-
-        }
-        else if(name != null && FunctionStorage.getInstance().hasFunction(name.getDeclaratorId()) && !ClassStorage.getInstance().hasClass(name.getDeclaratorId())) {
-            line.append(name.getDeclaratorId()).append("(");
-            if(expression != null) {
-                line.append(expression.toPython(0));
-            }
-            line.append(")");
-            sb.append(line);
-        }
-        else if (type != null && ClassStorage.getInstance().hasClass(type)) {
-
-            line.append(getNameOut());
-            line.append("=").append(getType()).append("(");
-            if(expression != null) {
-                line.append(((ExpressionNode)expression).toPython(0));
-            }
-            line.append(")");
-            sb.append(line);
-            //TODO: this should be fixed crucial;
-        }
-        else if (type != null && type.contains("vector")){
-            line.append(getNameOut());
-            line.append(" = ");
-            line.append("[");
-            line.append(expression.toPython(indent));
-            line.append("]");
-            sb.append(line);
-        }
-        else {
-            if (expression != null) {
-                line.append(getNameOut());
-                line.append(" = ");
-                line.append(expression.toPython(indent));
-            }
-            sb.append(line);
-        }
-
-        return sb.toString();
+        return target + " = None";
     }
 
 
     @Override
     public String toPython(int indent, CodegenContext ctx) {
+        final String id = getNameOut();
+
+        if (!Boolean.TRUE.equals(classMember) && id != null && type != null && !type.isBlank()) {
+            ctx.syms.declareVar(id, type);
+        }
         if ("class".equals(type) && expression != null) {
             String forwarded = expression.toPython(indent, ctx);
             if (forwarded != null && !forwarded.isEmpty()) ctx.out.write(forwarded);
             return "";
         }
-
-        final String id = getNameOut();
-        System.out.println(" MY NAME "+ id);
         if (type == null && expression == null && id != null) {
-
             if (ctx.syms.inClassScope() && ctx.syms.classHasMethod(ctx.syms.currentClass(), id)) {
                 ctx.out.writeln("self." + id + "()");
                 return "";
@@ -180,34 +143,41 @@ public class VariableDeclarationNode extends ASTNode {
             ctx.out.writeln(id + " = None");
             return "";
         }
-        // ---------------------------------------------------------------
 
-        String target = id;
-        if (classMember) target = "self." + target;
+        String target = classMember ? "self." + id : id;
 
-        if (type != null && ctx.syms.hasClass(type)) {
+        if (ctx.syms.hasClass(type)) {
             String args = "";
             if (expression != null) {
-                String init = expression.toPython(0);
-                args = (init == null ? "" : init.strip());
+                args = argsFromExpr(expression, ctx).strip();
             }
             ctx.out.writeln(target + " = " + type + "(" + args + ")");
             return "";
         }
-
-        if (type != null && (type.contains("vector") || type.contains("array"))) {
+        if (isVectorLike(type)) {
             String contents = "";
             if (expression != null) {
-                String s = expression.toPython(0);
-                if (s != null) contents = s.strip();
+                contents = argsFromExpr(expression, ctx).strip();
             }
             String typing = TypeMapper.mapCppTypeToPython(type);
             ctx.out.writeln(target + (!Objects.equals(typing, "unknown") ? ": " + typing : "") + " = [" + contents + "]");
             return "";
         }
 
+        if (type == null && name != null && ctx.syms.isFreeFunction(name.getDeclaratorId())
+                && !ctx.syms.hasClass(name.getDeclaratorId())) {
+            String args = (expression == null) ? "" : argsFromExpr(expression, ctx).strip();
+            ctx.out.writeln(name.getDeclaratorId() + "(" + args + ")");
+            return "";
+        }
         if (expression != null) {
-            String rhs = expression.toPython(indent);
+            String rhs;
+            if (expression instanceof ExpressionNode en) {
+                rhs = en.emitExpr(ctx).code.strip();
+            } else {
+                String s = expression.toPython(0);
+                rhs = (s == null ? "" : s.strip());
+            }
             String typing = null;
             if (type != null) {
                 typing = TypeMapper.mapCppTypeToPython(type);
@@ -218,13 +188,57 @@ public class VariableDeclarationNode extends ASTNode {
         }
         return "";
     }
-    @Override
-    public void collectImports(CodegenContext ctx) {
-        if (expression != null) expression.collectImports(ctx);
-    }
 
     @Override
     public void discover(CodegenContext ctx) {
-        if (expression != null) expression.discover(ctx);
+        if (getName() != null) {
+            String varName = getNameOut();
+            String varType = (getType() == null) ? "" : getType();
+            ctx.syms.declareVar(varName, varType);
+        }
+        if (getExpression() != null) getExpression().discover(ctx);
+    }
+
+    private static String argsFromExpr(ASTNode e, CodegenContext ctx) {
+        if (!(e instanceof ExpressionNode en)) {
+            return (e == null) ? "" : e.toPython(0);
+        }
+
+        String typ = en.getType();
+        if ("InitializerList".equals(typ) || "LIST".equals(typ)) {
+            List<String> parts = new ArrayList<>();
+            if (en.getChildren() != null) {
+                for (ast.ASTNode ch : en.getChildren()) {
+                    if (ch instanceof ast.ExpressionNode ce) {
+                        parts.add(ce.emitExpr(ctx).code);
+                    } else {
+                        parts.add(ch.toPython(0));
+                    }
+                }
+            }
+            return String.join(", ", parts);
+        }
+        if (en.getChildren() != null) {
+            for (ast.ASTNode ch : en.getChildren()) {
+                if (ch instanceof ast.ExpressionNode childEn) {
+                    String ctyp = childEn.getType();
+                    if ("InitializerList".equals(ctyp) || "LIST".equals(ctyp)) {
+                        List<String> parts = new ArrayList<>();
+                        if (childEn.getChildren() != null) {
+                            for (ast.ASTNode gch : childEn.getChildren()) {
+                                if (gch instanceof ast.ExpressionNode gce) {
+                                    parts.add(gce.emitExpr(ctx).code);
+                                } else {
+                                    parts.add(gch.toPython(0));
+                                }
+                            }
+                        }
+                        return String.join(", ", parts);
+                    }
+                }
+            }
+        }
+
+        return en.emitExpr(ctx).code;
     }
 }

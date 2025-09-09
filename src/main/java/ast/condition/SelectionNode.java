@@ -8,14 +8,14 @@ import ast.ExpressionNode;
 import ast.codegen.CodegenContext;
 
 import java.util.ArrayList;
+import java.util.Locale;
 
 public class SelectionNode extends ASTNode {
 
-    private String type; // "if", "else if", "else", or "switch"
-    private ExpressionNode condition; // the condition for "if" or "else if"
-    private ASTNode thenBranch; // the body of "if" or "else if"
-    private ASTNode elseBranch; // the "else" branch or the next "else if"
-    private ArrayList<CaseNode> cases; // for "switch", a list of cases, null for "if(s)"
+    private String type;
+    private ExpressionNode condition;
+    private ASTNode thenBranch;
+    private ASTNode elseBranch;
 
 
     public SelectionNode(){}
@@ -23,17 +23,6 @@ public class SelectionNode extends ASTNode {
         this.type = type;
         this.condition = condition;
         this.thenBranch = thenBranch;
-        this.cases = new ArrayList<>();
-    }
-
-    public SelectionNode(String type, ExpressionNode condition, ASTNode thenBranch, ASTNode elseBranch) {
-        this(type, condition, thenBranch);
-        this.elseBranch = elseBranch;
-    }
-
-    public SelectionNode(String type, ArrayList<CaseNode> cases) { // Constructor for "switch"
-        this.type = type;
-        this.cases = cases;
     }
 
     public void setElseBranch(ASTNode elseBranch) {
@@ -44,108 +33,103 @@ public class SelectionNode extends ASTNode {
         this.type = type;
     }
 
-    public String getType() {
-        return type;
-    }
-
     public ExpressionNode getCondition() {
         return condition;
     }
 
     public void setCondition(ExpressionNode condition) { this.condition = condition; }
-    public ASTNode getThenBranch() {
-        return thenBranch;
-    }
     public void setThenBranch(ASTNode thenBranch) {this.thenBranch = thenBranch;}
 
-    public ASTNode getElseBranch() {
-        return elseBranch;
-    }
 
-    public ArrayList<CaseNode> getCases() {
-        return cases;
-    }
+    private enum Kind { IF, ELIF, ELSE, SWITCH, UNKNOWN }
 
-    public void addCase(CaseNode caseNode) {
-        this.cases.add(caseNode);
+    private Kind kind() {
+        String t = (type == null ? "" : type.trim().toLowerCase(Locale.ROOT));
+        if (t.equals("if")) return Kind.IF;
+        if (t.equals("elseif") || t.equals("else if")) return Kind.ELIF;
+        if (t.equals("else")) return Kind.ELSE;
+        if (t.equals("switch")) return Kind.SWITCH;
+        return Kind.UNKNOWN;
     }
 
     @Override
     protected String nodeLabel() {
-        String t = type == null ? "" : type;
-        String c = condition == null ? "" : condition.getValue();
-        return "Condition(" + t + c + ")";
+        String t = (type == null ? "" : type);
+        String c = (condition == null ? "" : condition.getValue());
+        return "Condition(" + t + (c.isEmpty() ? "" : " " + c) + ")";
     }
 
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("SelectionNode[ type = ");
-        sb.append(type);
-        if (condition != null) {
-            sb.append(" Condition = [").append(condition).append("]");
+    private void emitElseChain(ASTNode branch, CodegenContext ctx) {
+        if (branch == null) return;
+
+        if (branch instanceof SelectionNode sel) {
+            switch (sel.kind()) {
+                case ELIF: {
+                    if (sel.condition == null || sel.thenBranch == null) return;
+                    ctx.out.writeln("elif " + sel.condition.toPython(0) + ":");
+                    ctx.out.indent();
+                    sel.thenBranch.toPython(0, ctx);
+                    ctx.out.dedent();
+                    emitElseChain(sel.elseBranch, ctx);
+                    return;
+                }
+                case ELSE: {
+                    if (sel.thenBranch == null) return;
+                    ctx.out.writeln("else:");
+                    ctx.out.indent();
+                    sel.thenBranch.toPython(0, ctx);
+                    ctx.out.dedent();
+                    return;
+                }
+                default:
+            }
         }
-        sb.append(" THEN[ ").append(thenBranch).append(" ]");
-        if (elseBranch != null) {
-            sb.append(" ELSE [ ").append(elseBranch).append(" ]");
-        }
-        if (cases != null && !cases.isEmpty()) {
-            sb.append(" cases: ").append(cases);
-        }
-        return sb.toString();
+
+        ctx.out.writeln("else:");
+        ctx.out.indent();
+        branch.toPython(0, ctx);
+        ctx.out.dedent();
     }
 
-    @Override
-    public String toPython(int indent) {
-        StringBuilder sb = new StringBuilder();
-        StringBuilder line = new StringBuilder();
-
-        if(type != null && type.equals("if") && condition != null && thenBranch != null ) {
-            line.append(this.type).append(" ");
-            line.append(this.condition.toPython(indent)).append(":");
-            sb.append(line).append('\n');
-            if(thenBranch instanceof CompoundNode) {
-                sb.append(this.thenBranch.toPython(indent+1));
-            }else{
-                sb.append(getIndentedPythonCode(indent+1,this.thenBranch.toPython(indent)));
-            }
-
-            if (elseBranch != null) {
-                sb.append(getIndentedPythonCode(indent, this.elseBranch.toPython(indent)));
-            }
-        }else if(type != null && type.equals("elseif") && thenBranch != null && elseBranch != null && condition != null) {
-            line.append("elif ");
-            line.append(this.condition.toPython(indent)).append(":");
-            sb.append(line).append('\n');
-//            sb.append(this.thenBranch.toPython(indent+1));
-            if(thenBranch instanceof CompoundNode) {
-                sb.append(this.thenBranch.toPython(indent+1));
-            }else{
-                sb.append(getIndentedPythonCode(indent+1,this.thenBranch.toPython(indent)));
-            }
-            if (elseBranch != null) {
-                sb.append(getIndentedPythonCode(indent, this.elseBranch.toPython(indent)));
-            }
-        }
-        if(type!= null && type.equals("else") && thenBranch != null){
-            line.append(this.type);
-            line.append(":");
-            sb.append(line).append('\n');
-//            sb.append(this.thenBranch.toPython(indent+1));
-            if(thenBranch instanceof CompoundNode) {
-                sb.append(this.thenBranch.toPython(indent+1));
-            }else{
-                sb.append(getIndentedPythonCode(indent+1,this.thenBranch.toPython(indent)));
-            }
-        }
-
-        return sb.toString();
-    }
 
     @Override
     public String toPython(int indent, CodegenContext ctx) {
-        String s = toPython(indent);
-        if (s != null && !s.isEmpty()) ctx.out.writeln(s);
-        return "";
+        switch (kind()) {
+            case IF: {
+                if (condition == null || thenBranch == null) return "";
+                ctx.out.writeln("if " + condition.toPython(0) + ":");
+                ctx.out.indent();
+                thenBranch.toPython(0, ctx);
+                ctx.out.dedent();
+                emitElseChain(elseBranch, ctx);
+                return "";
+            }
+            case ELIF: {
+                if (condition == null || thenBranch == null) return "";
+                ctx.out.writeln("elif " + condition.toPython(0) + ":");
+                ctx.out.indent();
+                thenBranch.toPython(0, ctx);
+                ctx.out.dedent();
+                emitElseChain(elseBranch, ctx);
+                return "";
+            }
+            case ELSE: {
+                if (thenBranch == null) return "";
+                ctx.out.writeln("else:");
+                ctx.out.indent();
+                thenBranch.toPython(0, ctx);
+                ctx.out.dedent();
+                return "";
+            }
+            case SWITCH: {
+                ctx.out.writeln("# TODO: switch/case");
+                return "";
+            }
+            case UNKNOWN:
+            default: {
+                ctx.out.writeln("unknown selection node");
+                return "";
+            }
+        }
     }
 }

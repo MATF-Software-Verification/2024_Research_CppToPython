@@ -16,14 +16,13 @@ public class FunctionNode extends ASTNode {
 
     private final String return_value;
     private DeclaratorNode func_declarator;
-    private CompoundNode body; //TODO change to CompoundNode later.
+    private CompoundNode body;
     private boolean in_class;
     private boolean isConstructor;
     private String ownerClassName;
 
 
     public FunctionNode(String return_value, DeclaratorNode declarator, boolean in_class) {
-//        this.body = new ArrayList<>();
         this.return_value = return_value;
         this.func_declarator = declarator;
         this.in_class = in_class;
@@ -34,23 +33,11 @@ public class FunctionNode extends ASTNode {
         return func_declarator != null ? func_declarator.getDeclaratorId() : null;
     }
 
-    public void addBodyNode(ASTNode node) {
-        if (body == null) body = new CompoundNode();
-        body.add(node);
-    }
 
     public DeclaratorNode getFunc_declarator() {
         return func_declarator;
     }
 
-    public void setFunc_declarator(DeclaratorNode func_declarator) {
-        this.func_declarator = func_declarator;
-    }
-
-
-    public CompoundNode getBody() {
-        return body;
-    }
 
     public void setBody(CompoundNode body) {
         if (this.body == null)
@@ -62,24 +49,14 @@ public class FunctionNode extends ASTNode {
         }
     }
 
-    public boolean isInClass() {
-        return in_class;
-    }
 
     public void setInClass(boolean in_class) {
         this.in_class = in_class;
     }
 
-    public boolean isConstructor() {
-        return isConstructor;
-    }
 
     public void setConstructor(boolean constructor) {
         isConstructor = constructor;
-    }
-
-    public String getOwnerClassName() {
-        return ownerClassName;
     }
 
     public void setOwnerClassName(String ownerClassName) {
@@ -116,90 +93,50 @@ public class FunctionNode extends ASTNode {
         return sb.toString();
     }
 
-    @Deprecated
-    @Override
-    public String toString() {
-
-        StringBuilder sb = new StringBuilder();
-        sb.append("Function{");
-        if (return_value != null) {
-            sb.append("return_value=").append(return_value);
-        }
-
-        if (func_declarator.getDeclaratorId() != null) {
-            sb.append(", name: ").append(func_declarator.getDeclaratorId());
-        }
-
-        if (func_declarator.getParameters() != null) {
-            sb.append(", parameters: ").append(func_declarator.getParameters());
-        }
-
-        if (body != null) {
-            sb.append(", body: ").append(body);
-        }
-
-        sb.append("}");
-
-        return sb.toString();
-    }
-
-    @Override
-    public String toPython(int indent) {
-
-        StringBuilder sb = new StringBuilder();
-        StringBuilder code = new StringBuilder();
-        code.append("def ");
-        if (ClassStorage.getInstance().getClassNames().contains(func_declarator.getDeclaratorId())) {
-            code.append("__init__");
-        } else
-            code.append(func_declarator.getDeclaratorId());
-
-        code.append("(");
-        if (in_class) {
-            code.append("self");
-            if (func_declarator.getParameters() != null) {
-                code.append(",");
-            }
-        }
-        if (func_declarator.getParameters() != null) {
-            for (int i = 0; i < func_declarator.getParameters().size(); i++) {
-
-                VariableDeclarationNode param = func_declarator.getParameters().get(i);
-                String name = param.getName().getDeclaratorId();
-                if (i < func_declarator.getParameters().size() - 1) {
-                    code.append(name + ",");
-                } else {
-                    code.append(name);
-                }
-            }
-        }
-        code.append("):");
-        sb.append(getIndentedPythonCode(indent, code.toString()));
-        sb.append(body.toPython(indent + 1));
-
-        return sb.toString();
-    }
-
     @Override
     public String toPython(int indent, CodegenContext ctx) {
         String cppName = getName();
         String pyName = (isConstructor || "__init__".equals(cppName)) ? "__init__" : cppName;
+        if (pyName == null || pyName.isBlank()) pyName = "fn";
 
         String retVal = TypeMapper.mapCppTypeToPython(return_value);
         String typing = (!Objects.equals(retVal, "unknown") ? " -> " + retVal : "");
         String signature = "def " + pyName + "(" + buildParamListPython() + ")" + (!Objects.equals(pyName, "__init__") ? typing : "") + ":";
         ctx.out.writeln(signature);
         ctx.out.indent();
+        ctx.enterScope();
 
-        if (body == null) {
-            ctx.out.writeln("pass");
-        } else {
-            ctx.out.write(body.toPython(indent + 1,ctx));
+        if (in_class) ctx.declare("self");
+        if (func_declarator != null && func_declarator.getParameters() != null) {
+            for (VariableDeclarationNode p : func_declarator.getParameters()) {
+                if (p.getName() != null && p.getName().getDeclaratorId() != null) {
+                    ctx.declare(p.getName().getDeclaratorId());
+                }
+            }
         }
 
+        if (in_class && ownerClassName != null) {
+            ctx.syms.declareVar("self", ownerClassName);
+        }
+        if (func_declarator != null && func_declarator.getParameters() != null) {
+            for (VariableDeclarationNode p : func_declarator.getParameters()) {
+                var n = (p.getName() != null ? p.getName().getDeclaratorId() : null);
+                if (n != null && p.getType() != null && !p.getType().isBlank()) {
+                    ctx.syms.declareVar(n, p.getType());
+                }
+            }
+        }
+
+        if (body == null || body.getStatements().isEmpty()) {
+            ctx.out.writeln("pass");
+        } else {
+            body.toPython(indent + 1, ctx);
+        }
+        ctx.exitScope();
         ctx.out.dedent();
         return "";
     }
+
 
     private String buildParamListPython() {
 
@@ -216,22 +153,19 @@ public class FunctionNode extends ASTNode {
         return String.join(", ", params);
     }
 
-    @Override
-    public void collectImports(CodegenContext ctx) {
-        if (body != null) body.collectImports(ctx);
-    }
 
     @Override
     public void discover(CodegenContext ctx) {
         String n = getName();
-        System.out.println("============================= discover: " + n);
-        if (isInClass()) {
-            if (getOwnerClassName() != null && n != null) ctx.syms.addMethod(getOwnerClassName(), n);
+        if (in_class) {
+            if (ownerClassName != null && n != null) {
+                ctx.syms.addMethod(ownerClassName, n);
+            }
         } else {
             if (n != null) ctx.syms.addFreeFunction(n);
             if ("main".equals(n)) ctx.meta.hasMain = true;
         }
-        if (getBody() != null) getBody().discover(ctx);
+        if (body != null) body.discover(ctx);
     }
 
 }

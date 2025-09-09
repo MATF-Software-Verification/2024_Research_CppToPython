@@ -21,15 +21,15 @@ public abstract class ASTNode {
     protected String nodeLable() {
         return getClass().getSimpleName();
     }
-    public abstract String toPython(int indent);
+
+    public String toPython(int indent) {
+        return "Basic Node without override";
+    }
 
     public void discover(CodegenContext ctx) {
     }
 
     public abstract String toPython(int indent, CodegenContext ctx);
-
-    public void collectImports(CodegenContext ctx) {
-    }
 
     protected final String line(int indent, String code) {
         return indent(indent) + code + "\n";

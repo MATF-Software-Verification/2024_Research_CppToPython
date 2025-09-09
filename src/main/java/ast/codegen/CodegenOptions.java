@@ -17,5 +17,4 @@ public final class CodegenOptions {
 
     public CodegenOptions withEmitEntryPoint(boolean v)       { return new CodegenOptions(v,   blankLineBetweenDecls, keepCppComments); }
     public CodegenOptions withBlankLineBetweenDecls(boolean v){ return new CodegenOptions(emitEntryPoint, v,         keepCppComments); }
-    public CodegenOptions withKeepCppComments(boolean v)      { return new CodegenOptions(emitEntryPoint, blankLineBetweenDecls, v); }
 }

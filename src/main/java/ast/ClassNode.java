@@ -2,7 +2,6 @@ package ast;
 
 import ast.codegen.CodegenContext;
 import ast.functions.FunctionNode;
-import utils.ClassStorage;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,13 +18,9 @@ public class ClassNode extends ASTNode {
     }
 
     public void setClassName(String className) {
-        ClassStorage.getInstance().addClass(className);
         this.className = className;
     }
 
-    public List<ASTNode> getMembers() {
-        return members;
-    }
 
     public void setMembers(List<ASTNode> newMembers) {
         members.clear();
@@ -36,15 +31,11 @@ public class ClassNode extends ASTNode {
     public void addMember(ASTNode member) {
         if (member == null) return;
 
-        // Mark function members as in-class, set owner, mark constructor, register to storage
         if (member instanceof FunctionNode fn) {
             fn.setInClass(true);
             fn.setOwnerClassName(className);
             if (fn.getName() != null && fn.getName().equals(className)) {
                 fn.setConstructor(true);
-            }
-            if (className != null && fn.getName() != null) {
-                ClassStorage.getInstance().addFunction(className, fn.getName());
             }
         }
 

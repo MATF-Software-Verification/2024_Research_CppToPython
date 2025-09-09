@@ -9,10 +9,6 @@ public class WhileNode  extends  IterationNode {
     private ASTNode condition;
 
     public WhileNode() {super();}
-    public WhileNode(ASTNode condition){
-        super();
-        this.condition = condition;
-    }
 
     public ASTNode getCondition() {
         return condition;
@@ -24,58 +20,33 @@ public class WhileNode  extends  IterationNode {
 
     @Override
     protected String nodeLabel() {
-        ExpressionNode cond = (ExpressionNode) condition;
-        String c = cond.getValue();
-        return "While(" + c + ")";
+        String c;
+        if (condition instanceof ExpressionNode en) c = en.getValue();
+        else if (condition != null) c = condition.toPython(0);
+        else c = "True";
+        return "While(" + (c == null ? "" : c) + ")";
     }
 
     @Override
     public String toTree(int indent) {
         StringBuilder sb = new StringBuilder();
         sb.append(line(indent, nodeLabel()));
-        if (body != null) {
-            sb.append(body.toTree(indent + 1));
-        } else {
-            sb.append(line(indent + 1, "(no body)"));
-        }
-        return sb.toString();
-    }
-
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("WhileNode [condition=");
-        sb.append(condition);
-        sb.append("body=");
-        sb.append(body);
-        sb.append("]");
-        sb.append("\n");
-
-        return sb.toString();
-    }
-
-    @Override
-    public String toPython(int indent) {
-        StringBuilder sb = new StringBuilder();
-        StringBuilder line = new StringBuilder();
-        line.append("while ");
-        if (condition != null) {
-            line.append(((ExpressionNode)getCondition()).getValue());
-        }
-
-        line.append(":");
-        sb.append(getIndentedPythonCode(indent-2,line.toString()));
-        if(body != null){
-            sb.append(body.toPython(indent+1));
-        }
-
+        if (body != null) sb.append(body.toTree(indent + 1));
+        else sb.append(line(indent + 1, "(no body)"));
         return sb.toString();
     }
 
     @Override
     public String toPython(int indent, CodegenContext ctx) {
-        String s = toPython(indent);
-        if (s != null && !s.isEmpty()) ctx.out.writeln(s);
+        String cond = (condition == null) ? "True" : condition.toPython(0);
+        ctx.out.writeln("while " + (cond == null ? "True" : cond) + ":");
+        ctx.out.indent();
+        if (body != null) {
+            body.toPython(0, ctx);
+        } else {
+            ctx.out.writeln("pass");
+        }
+        ctx.out.dedent();
         return "";
     }
 }

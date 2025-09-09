@@ -1,7 +1,6 @@
-package ast;
+package ast.codegen;
 
-import ast.codegen.CodegenContext;
-import ast.codegen.CodegenOptions;
+import ast.TranslationUnitNode;
 
 public class CodeGenerator {
     private final CodegenOptions options;
@@ -14,9 +13,7 @@ public class CodeGenerator {
         CodegenContext ctx = new CodegenContext(options);
 
         tu.discover(ctx);
-        tu.collectImports(ctx);
-        ctx.out.write(ctx.emitImports());
-        ctx.out.write("import typing\n\n");
+
         tu.toPython(0, ctx);
 
         if (options.emitEntryPoint && ctx.meta.hasMain) {
