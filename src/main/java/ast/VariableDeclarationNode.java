@@ -1,8 +1,6 @@
 package ast;
 
 import ast.codegen.CodegenContext;
-import utils.ClassStorage;
-import utils.FunctionStorage;
 import utils.TypeMapper;
 
 import java.util.ArrayList;

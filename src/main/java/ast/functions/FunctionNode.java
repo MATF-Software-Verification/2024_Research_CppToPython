@@ -5,7 +5,6 @@ import ast.CompoundNode;
 import ast.DeclaratorNode;
 import ast.VariableDeclarationNode;
 import ast.codegen.CodegenContext;
-import utils.ClassStorage;
 import utils.TypeMapper;
 
 import java.util.List;
