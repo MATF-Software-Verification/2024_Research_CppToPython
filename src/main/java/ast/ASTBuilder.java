@@ -865,14 +865,14 @@ public class ASTBuilder extends CPP14ParserBaseVisitor<ASTNode> {
 
         if (ctx.PlusPlus() != null) {
             expression.setType("PostfixIncrement");
-            expression.setOperator("+=");
+            expression.setOperator("++");
             String baseText = expression.getChildren().isEmpty() ? "" : expression.getChildren().get(0).toPython(0);
             expression.setValue(baseText + " += 1");
             return;
         }
         if (ctx.MinusMinus() != null) {
             expression.setType("PostfixDecrement");
-            expression.setOperator("-=");
+            expression.setOperator("--");
             String baseText = expression.getChildren().isEmpty() ? "" : expression.getChildren().get(0).toPython(0);
             expression.setValue(baseText + " -= 1");
         }

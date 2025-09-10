@@ -1,31 +1,30 @@
 #include <iostream>
 #include <vector>
 
-
-int main(){
-
-    int n = 5;
-    std::vector<int> arr = {1,2,3,4,5};
+int main() {
+    std::vector<int> arr = {1, 2, 3, 4, 5};
+    int target = 5;
     int left = 0;
-    int right = arr.size()-1;
-    auto res = 5;
+    int right = arr.size() - 1;
+    int result = -1;
 
-    while(left <= right){
+    while (left <= right) {
+        int middle = left + (right - left) / 2;
 
-        int middle = (left + right) / 2;
-
-
-        if(res == arr[middle]){
-            res = middle;
+        if (arr[middle] == target) {
+            result = middle;
             break;
-        }
-        else if(arr[middle] < res){
+        } else if (arr[middle] < target) {
             left = middle + 1;
-        }else{
+        } else {
             right = middle - 1;
         }
-
     }
-    std::cout << res << std::endl;
-    return res;
+
+    if (result != -1)
+        std::cout << "Found at index " << result << std::endl;
+    else
+        std::cout << "Not found" << std::endl;
+
+    return 0;
 }

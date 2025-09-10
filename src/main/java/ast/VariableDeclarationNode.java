@@ -172,6 +172,9 @@ public class VariableDeclarationNode extends ASTNode {
             String rhs;
             if (expression instanceof ExpressionNode en) {
                 rhs = en.emitExpr(ctx).code.strip();
+                if (this.type != null && (this.type.equals("float") || this.type.equals("double"))){
+                    rhs = rhs.replace("//", "/");
+                }
             } else {
                 String s = expression.toPython(0);
                 rhs = (s == null ? "" : s.strip());
